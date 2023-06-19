@@ -19,7 +19,7 @@ async function start(): Promise<void> {
   await server.register({
     plugin: await import('hapi-pino'),
     options: {
-      redact: ['req.headers.authorization'],
+      redact: ['req.headers'],
       level: process.env.LOG_LEVEL || 'info',
       logPayload: !!process.env.LOG_PAYLOAD,
       logRouteTags: true,
