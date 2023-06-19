@@ -37,6 +37,7 @@ async function start(): Promise<void> {
       info: {
         title: 'MX API Cache',
       },
+      documentationPage: false,
     },
   })
 
