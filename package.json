@@ -39,10 +39,12 @@
     "test:types": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "yarn lint --fix",
-    "dev": "",
     "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/mx-api-cache.js",
+    "build:watch": "yarn build --watch",
     "build:docker": "docker-compose build mx-api-cache",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"Build,API\" -c \"cyan.bold,green.bold\" \"yarn build:watch\" \"yarn start:watch\"",
     "start": "node dist/mx-api-cache.js",
+    "start:watch": "nodemon dist/mx-api-cache.js",
     "start:ngrok": "ts-node .bin/ngrok.ts",
     "start:docker": "docker-compose up"
   }
