@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  mx-api-cache:
+    build: .
+    networks:
+      - localnet
+    ports:
+      - 3001:3001
+    env_file:
+      - .env.docker
+
+networks:
+  localnet:
+    name: localnet
