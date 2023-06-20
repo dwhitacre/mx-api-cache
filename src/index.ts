@@ -30,6 +30,7 @@ async function start(): Promise<void> {
 
   await server.register(await import('@hapi/inert'))
   await server.register(await import('@hapi/vision'))
+  await server.register({ plugin: await import('@hapi/h2o2'), options: { redirects: 5 } })
 
   await server.register({
     plugin: await import('hapi-swagger'),

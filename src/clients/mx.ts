@@ -15,7 +15,7 @@ export default class Mx {
     })
   }
 
-  async callApi(method: string, url: string, options: { [_: string]: unknown }): Promise<JSON | false> {
+  async call(method: string, url: string, options: { [_: string]: unknown }): Promise<JSON | false> {
     let body
     try {
       const response = await this.client.request(method.toUpperCase(), url, options)
