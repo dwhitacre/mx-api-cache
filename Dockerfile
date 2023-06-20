@@ -16,5 +16,6 @@ COPY --from=build /app/package.json /app/yarn.lock ./
 RUN yarn --prod
 
 COPY --from=build /app/dist dist/
+COPY /public public/
 
 ENTRYPOINT [ "node", "dist/mx-api-cache.js" ]
