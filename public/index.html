@@ -4,7 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mx API Cache</title>
-    <link rel="icon" href="https://i.groupme.com/692x692.jpeg.4297e8fddfa643b7a9181d779c851d03" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css" />
     <link rel="stylesheet" href="./styles/milligram.min.css" />
@@ -15,20 +14,19 @@
       <nav class="navigation">
         <section class="container" id="navigation">
           <h1 class="title">Mx API Cache</h1>
-        </section>
       </nav>
 
-      <section class="container" id="commands">
+      <section class="container" id="caches">
         <h3>Caches</h3>
         <table>
           <thead>
             <tr>
               <th>Cache</th>
               <th>Size</th>
-              <th>Status</th>
+              <th>Enabled</th>
             </tr>
           </thead>
-          <tbody id="commands-table-body"></tbody>
+          <tbody id="caches-table-body"></tbody>
         </table>
       </section>
 
@@ -41,7 +39,7 @@
       <footer class="footer">
         <section class="container ">
           <p>
-            Made with ♥. Licensed under the MIT License.
+            Made with ♥ by Dan.
           </p>
         </section>
       </footer>
@@ -52,7 +50,7 @@
   <script>
     ;(function() {
       function failed() {
-        $('#commands').hide()
+        $('#caches').hide()
         $('#failed').show()
       }
 
@@ -60,24 +58,24 @@
         return $('<td>').text(text)
       }
 
-      function getStatusEmoji(command) {
-        if (!command.enabled) return '❌'
-        if (command.hidden) return '👻'
+      function getStatusEmoji(cache) {
+        if (!cache.enabled) return '❌'
+        if (cache.hidden) return '👻'
         return '✔️'
       }
 
-      $.get('../commands', function(data, status) {
+      $.get('../caches', function(data, status) {
         if (status !== 'success') return failed()
         if (!data) return failed()
 
-        var commandsList = Object.keys(data).sort()
-        var tbody = $('#commands-table-body')
+        var cachesList = Object.keys(data).sort()
+        var tbody = $('#caches-table-body')
 
-        commandsList.forEach(function(command) {
+        cachesList.forEach(function(cache) {
           var tr = $('<tr>')
-            .append(td(data[command].usage))
-            .append(td(data[command].desc))
-            .append(td(getStatusEmoji(data[command])))
+            .append(td(data[cache].usage))
+            .append(td(data[cache].desc))
+            .append(td(getStatusEmoji(data[cache])))
 
           tbody.append(tr)
         })
