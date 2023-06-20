@@ -12,7 +12,7 @@ export default function register(server: Server): void {
             return {
               uri: `${server.mx().baseUrl}/${request.params.param}${request.url.search}`,
               headers: {
-                'User-Agent': `${pack.name}:${pack.version}`,
+                'User-Agent': request.headers['user-agent'] ?? `${pack.name}:${pack.version}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               },

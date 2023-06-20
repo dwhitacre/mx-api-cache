@@ -1,0 +1,349 @@
+{
+  "uuid": "8ca95d4c-2059-403b-a2d2-fe8b2f1eb1c5",
+  "lastMigration": 27,
+  "name": "Mx Sim",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 3002,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "2714f8fb-1c6c-4093-848f-ed0b32e890de",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "maps/download/:id",
+      "responses": [
+        {
+          "uuid": "4861b58b-2597-40b2-a2dc-2518c373b461",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/x-gbx"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"Map.Gbx\""
+            }
+          ],
+          "bodyType": "FILE",
+          "filePath": "./Map.Gbx",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true
+        },
+        {
+          "uuid": "4fa01d06-16bf-4975-bda3-9d3a8796c2a5",
+          "body": "<!DOCTYPE html\r\n\tPUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n<head>\r\n\t<title>Error &raquo; TrackmaniaExchange</title>\r\n</head>\r\n\r\n<body>\r\n</body>\r\n\r\n</html>",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "text/html; charset=utf-8"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "User-Agent",
+              "value": "fail/500",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    },
+    {
+      "uuid": "c2f5be69-1d10-4535-9c52-dddcf9771919",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "api/maps/get_map_info/multi/:id",
+      "responses": [
+        {
+          "uuid": "c30a9bf7-bb20-47fa-bd3e-6cac4b6c3e18",
+          "body": "[\n  {\n    \"TrackID\": 500,\n    \"UserID\": 500,\n    \"Username\": \"dan\",\n    \"GbxMapName\": \"Map\",\n    \"AuthorLogin\": \"GlfBbTEiQu2Ypf7X6wfXjA\",\n    \"MapType\": \"TM_Race\",\n    \"TitlePack\": \"Trackmania\",\n    \"TrackUID\": \"e4gkB7Tepzx5ARYVD13kLcyYk62\",\n    \"Mood\": \"48x48Sunset\",\n    \"DisplayCost\": 814,\n    \"ModName\": null,\n    \"Lightmap\": 8,\n    \"ExeVersion\": \"3.3.0\",\n    \"ExeBuild\": \"2020-07-02_17_50\",\n    \"AuthorTime\": 17502,\n    \"ParserVersion\": 1,\n    \"UploadedAt\": \"2020-07-03T17:47:40.47\",\n    \"UpdatedAt\": \"2020-07-03T17:47:40.47\",\n    \"Name\": \"Map\",\n    \"Tags\": \"3\",\n    \"TypeName\": \"Script\",\n    \"StyleName\": \"Tech\",\n    \"EnvironmentName\": \"Stadium\",\n    \"VehicleName\": \"CarSport\",\n    \"UnlimiterRequired\": false,\n    \"RouteName\": \"Single\",\n    \"LengthName\": \"15 secs\",\n    \"DifficultyName\": \"Beginner\",\n    \"Laps\": 1,\n    \"ReplayWRID\": 84897,\n    \"ReplayWRTime\": 15908,\n    \"ReplayWRUserID\": 471,\n    \"ReplayWRUsername\": \"Mortex\",\n    \"TrackValue\": 15,\n    \"Comments\": \"\",\n    \"MappackID\": 0,\n    \"Unlisted\": false,\n    \"Unreleased\": false,\n    \"Downloadable\": true,\n    \"RatingVoteCount\": 0,\n    \"RatingVoteAverage\": 0,\n    \"HasScreenshot\": false,\n    \"HasThumbnail\": true,\n    \"HasGhostBlocks\": true,\n    \"EmbeddedObjectsCount\": 1,\n    \"EmbeddedItemsSize\": 3226,\n    \"AuthorCount\": 1,\n    \"IsMP4\": true,\n    \"SizeWarning\": false,\n    \"AwardCount\": 0,\n    \"CommentCount\": 0,\n    \"ReplayCount\": 3,\n    \"ImageCount\": 0,\n    \"VideoCount\": 0\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true
+        },
+        {
+          "uuid": "33a6e67f-2974-437d-9b8e-607c8c93aff7",
+          "body": "<!DOCTYPE html\r\n\tPUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n<head>\r\n\t<title>Error &raquo; TrackmaniaExchange</title>\r\n</head>\r\n\r\n<body>\r\n</body>\r\n\r\n</html>",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "text/html; charset=utf-8"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "User-Agent",
+              "value": "fail/500",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    },
+    {
+      "uuid": "a236fa1f-88c4-4945-b661-b3c4139a9dbc",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "api/tags/gettags",
+      "responses": [
+        {
+          "uuid": "b056b99a-08d5-4f71-8a58-396a41ebac20",
+          "body": "[\n  {\n    \"ID\": 1,\n    \"Name\": \"Race\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 2,\n    \"Name\": \"FullSpeed\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 3,\n    \"Name\": \"Tech\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 4,\n    \"Name\": \"RPG\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 5,\n    \"Name\": \"LOL\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 6,\n    \"Name\": \"Press Forward\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 7,\n    \"Name\": \"SpeedTech\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 8,\n    \"Name\": \"MultiLap\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 9,\n    \"Name\": \"Offroad\",\n    \"Color\": \"705100\"\n  },\n  {\n    \"ID\": 10,\n    \"Name\": \"Trial\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 11,\n    \"Name\": \"ZrT\",\n    \"Color\": \"1a6300\"\n  },\n  {\n    \"ID\": 12,\n    \"Name\": \"SpeedFun\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 13,\n    \"Name\": \"Competitive\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 14,\n    \"Name\": \"Ice\",\n    \"Color\": \"05767d\"\n  },\n  {\n    \"ID\": 15,\n    \"Name\": \"Dirt\",\n    \"Color\": \"5e2d09\"\n  },\n  {\n    \"ID\": 16,\n    \"Name\": \"Stunt\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 17,\n    \"Name\": \"Reactor\",\n    \"Color\": \"d04500\"\n  },\n  {\n    \"ID\": 18,\n    \"Name\": \"Platform\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 19,\n    \"Name\": \"Slow Motion\",\n    \"Color\": \"004388\"\n  },\n  {\n    \"ID\": 20,\n    \"Name\": \"Bumper\",\n    \"Color\": \"aa0000\"\n  },\n  {\n    \"ID\": 21,\n    \"Name\": \"Fragile\",\n    \"Color\": \"993366\"\n  },\n  {\n    \"ID\": 22,\n    \"Name\": \"Scenery\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 23,\n    \"Name\": \"Kacky\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 24,\n    \"Name\": \"Endurance\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 25,\n    \"Name\": \"Mini\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 26,\n    \"Name\": \"Remake\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 27,\n    \"Name\": \"Mixed\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 28,\n    \"Name\": \"Nascar\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 29,\n    \"Name\": \"SpeedDrift\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 30,\n    \"Name\": \"Minigame\",\n    \"Color\": \"7e0e69\"\n  },\n  {\n    \"ID\": 31,\n    \"Name\": \"Obstacle\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 32,\n    \"Name\": \"Transitional\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 33,\n    \"Name\": \"Grass\",\n    \"Color\": \"06a805\"\n  },\n  {\n    \"ID\": 34,\n    \"Name\": \"Backwards\",\n    \"Color\": \"83aa00\"\n  },\n  {\n    \"ID\": 35,\n    \"Name\": \"Freewheel\",\n    \"Color\": \"f2384e\"\n  },\n  {\n    \"ID\": 36,\n    \"Name\": \"Signature\",\n    \"Color\": \"f1c438\"\n  },\n  {\n    \"ID\": 37,\n    \"Name\": \"Royal\",\n    \"Color\": \"ff0010\"\n  },\n  {\n    \"ID\": 38,\n    \"Name\": \"Water\",\n    \"Color\": \"69dbff\"\n  },\n  {\n    \"ID\": 39,\n    \"Name\": \"Plastic\",\n    \"Color\": \"fffc00\"\n  },\n  {\n    \"ID\": 40,\n    \"Name\": \"Arena\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 41,\n    \"Name\": \"Freestyle\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 42,\n    \"Name\": \"Educational\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 43,\n    \"Name\": \"Sausage\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 44,\n    \"Name\": \"Bobsleigh\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 45,\n    \"Name\": \"Pathfinding\",\n    \"Color\": \"\"\n  },\n  {\n    \"ID\": 46,\n    \"Name\": \"FlagRush\",\n    \"Color\": \"7a0000\"\n  },\n  {\n    \"ID\": 47,\n    \"Name\": \"Puzzle\",\n    \"Color\": \"459873\"\n  },\n  {\n    \"ID\": 48,\n    \"Name\": \"Freeblocking\",\n    \"Color\": \"ffffff\"\n  },\n  {\n    \"ID\": 49,\n    \"Name\": \"Altered Nadeo\",\n    \"Color\": \"3a3a3a\"\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true
+        },
+        {
+          "uuid": "50ce5a5c-86bb-487f-837b-2d6d1c2b84f9",
+          "body": "<!DOCTYPE html\r\n\tPUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n<head>\r\n\t<title>Error &raquo; TrackmaniaExchange</title>\r\n</head>\r\n\r\n<body>\r\n</body>\r\n\r\n</html>",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "text/html; charset=utf-8"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "User-Agent",
+              "value": "fail/500",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    },
+    {
+      "uuid": "f246db98-95cd-4442-b749-ee98ad001d80",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "mapsearch2/search",
+      "responses": [
+        {
+          "uuid": "32a1cd83-320e-43d0-924c-7cd777d41b46",
+          "body": "{\n  \"results\": [\n    {\n      \"TrackID\": 500,\n      \"UserID\": 500,\n      \"Username\": \"dan\",\n      \"GbxMapName\": \"Map\",\n      \"AuthorLogin\": \"1H_3bIdQTrmjHBc5DsBIKg\",\n      \"MapType\": \"TM_Race\",\n      \"TitlePack\": \"TMStadium\",\n      \"TrackUID\": \"cT8NBBu4BjjUUda2gMnZMcSGXe0\",\n      \"Mood\": \"48x48Day\",\n      \"DisplayCost\": 3833,\n      \"ModName\": \"\",\n      \"Lightmap\": 8,\n      \"ExeVersion\": \"3.3.0\",\n      \"ExeBuild\": \"2022-10-06_21_04\",\n      \"AuthorTime\": 59199,\n      \"ParserVersion\": 2,\n      \"UploadedAt\": \"2022-11-15T18:37:51.32\",\n      \"UpdatedAt\": \"2022-11-15T18:37:51.32\",\n      \"Name\": \"Map\",\n      \"Tags\": \"17,21,38\",\n      \"TypeName\": \"Race\",\n      \"StyleName\": \"Fragile\",\n      \"EnvironmentName\": \"Stadium\",\n      \"VehicleName\": \"CarSport\",\n      \"UnlimiterRequired\": false,\n      \"RouteName\": \"Single\",\n      \"LengthName\": \"1 min\",\n      \"DifficultyName\": \"Intermediate\",\n      \"Laps\": 1,\n      \"ReplayWRID\": null,\n      \"ReplayWRTime\": null,\n      \"ReplayWRUserID\": null,\n      \"ReplayWRUsername\": null,\n      \"TrackValue\": 0,\n      \"Comments\": \"\",\n      \"MappackID\": 0,\n      \"Unlisted\": false,\n      \"Unreleased\": false,\n      \"Downloadable\": true,\n      \"RatingVoteCount\": 0,\n      \"RatingVoteAverage\": 0,\n      \"HasScreenshot\": false,\n      \"HasThumbnail\": true,\n      \"HasGhostBlocks\": true,\n      \"EmbeddedObjectsCount\": 0,\n      \"EmbeddedItemsSize\": 12,\n      \"AuthorCount\": 1,\n      \"IsMP4\": true,\n      \"SizeWarning\": false,\n      \"AwardCount\": 0,\n      \"CommentCount\": 0,\n      \"ReplayCount\": 0,\n      \"ImageCount\": 0,\n      \"VideoCount\": 0\n    }\n  ],\n  \"totalItemCount\": 1\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true
+        },
+        {
+          "uuid": "f0349974-3698-4927-8a2a-a4c7f9f849da",
+          "body": "<!DOCTYPE html\r\n\tPUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n<head>\r\n\t<title>Error &raquo; TrackmaniaExchange</title>\r\n</head>\r\n\r\n<body>\r\n</body>\r\n\r\n</html>",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "private"
+            },
+            {
+              "key": "Content-Type",
+              "value": "text/html; charset=utf-8"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "User-Agent",
+              "value": "fail/500",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "2714f8fb-1c6c-4093-848f-ed0b32e890de"
+    },
+    {
+      "type": "route",
+      "uuid": "c2f5be69-1d10-4535-9c52-dddcf9771919"
+    },
+    {
+      "type": "route",
+      "uuid": "a236fa1f-88c4-4945-b661-b3c4139a9dbc"
+    },
+    {
+      "type": "route",
+      "uuid": "f246db98-95cd-4442-b749-ee98ad001d80"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "https://trackmania.exchange",
+  "proxyRemovePrefix": true,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": []
+}
