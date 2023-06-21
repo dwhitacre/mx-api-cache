@@ -49,7 +49,7 @@
     "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/mx-api-cache.js",
     "build:watch": "yarn build --watch",
     "build:docker": "docker-compose build mx-api-cache",
-    "dev": "concurrently -k -p \"[{name}]\" -n \"Build,API,Azurite,Mx-Sim\" -c \"cyan.bold,green.bold\" \"yarn build:watch\" \"yarn start:watch\" \"yarn start:azurite\" \"yarn start:mx-sim\"",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"Build,API,Azurite,Mx-Sim\" -c \"cyan.bold,green.bold,red.bold,blue.bold\" \"yarn build:watch\" \"yarn start:watch\" \"yarn start:azurite\" \"yarn start:mx-sim\"",
     "start": "node dist/mx-api-cache.js",
     "start:watch": "nodemon -i test dist/mx-api-cache.js",
     "start:ngrok": "ts-node .bin/ngrok.ts",
