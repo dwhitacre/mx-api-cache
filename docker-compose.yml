@@ -9,6 +9,23 @@ services:
       - 3001:3001
     env_file:
       - .env.docker
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    networks:
+      - localnet
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+  mx-sim:
+    image: mockoon/cli:latest
+    command: --data data/mx-sim.mockoon.json --port 3002
+    networks:
+      - localnet
+    ports:
+      - 3002:3002
+    volumes:
+      - ./test/mx-sim:/data:ro
 
 networks:
   localnet:

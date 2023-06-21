@@ -53,6 +53,8 @@
     "start": "node dist/mx-api-cache.js",
     "start:watch": "nodemon -i test dist/mx-api-cache.js",
     "start:ngrok": "ts-node .bin/ngrok.ts",
-    "start:docker": "docker-compose up --build"
+    "start:docker": "docker-compose up --build -- mx-api-cache",
+    "start:azurite": "docker-compose up -- azurite",
+    "start:mx-sim": "docker-compose up -- mx-sim"
   }
 }
