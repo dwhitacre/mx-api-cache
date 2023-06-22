@@ -1,9 +1,22 @@
-import { Request, ResponseToolkit, Server } from '@hapi/hapi'
+import { Request, ResponseObject, ResponseToolkit, Server } from '@hapi/hapi'
 import pack from '../../package.json'
 import { ProxyTarget } from '@hapi/h2o2'
 import { Boom } from '@hapi/boom'
 import { IncomingMessage } from 'http'
 import { Message } from '../clients/queue'
+import { DequeuedMessageItem } from '@azure/storage-queue'
+
+function getResponse(message: DequeuedMessageItem, request: Request, h: ResponseToolkit): ResponseObject {
+  const json = JSON.parse(message.messageText) as Message
+  request.logger.debug({ json }, 'parsed json')
+
+  const response = h.response(json.body).code(json.status)
+  Object.entries(json.headers).forEach(([key, value]) => {
+    response.header(key, value)
+  })
+
+  return response
+}
 
 export default function register(server: Server): void {
   server.route({
@@ -12,27 +25,9 @@ export default function register(server: Server): void {
     options: {
       handler: async function (request: Request, h: ResponseToolkit) {
         try {
-          const queueName = server.queue().getQueueName(request.url.pathname)
-          request.logger.debug({ queueName })
-
-          const queueClient = server.queue().client.getQueueClient(queueName)
-
-          const messages = await queueClient.receiveMessages()
-          if (messages.receivedMessageItems.length <= 0) throw new Error(`no messages in queue ${queueName}`)
-          const message = messages.receivedMessageItems[0]
-
-          await queueClient.deleteMessage(message.messageId, message.popReceipt)
-          request.logger.debug({ message }, 'processed message')
-
-          const json = JSON.parse(message.messageText) as Message
-          request.logger.debug({ json }, 'parsed json')
-
-          const response = h.response(json.body).code(json.status)
-          Object.entries(json.headers).forEach(([key, value]) => {
-            response.header(key, value)
-          })
-
-          return response
+          const queueClient = request.server.queue().getQueueClient(request)
+          const message = await request.server.queue().getMessage(queueClient, request)
+          return getResponse(message, request, h)
         } catch (err) {
           request.logger.debug(err, 'failed to connect to queue, falling back to proxy')
           return h.proxy({
