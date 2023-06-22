@@ -25,8 +25,12 @@ export default function register(server: Server): void {
     options: {
       handler: async function (request: Request, h: ResponseToolkit) {
         try {
-          const queueClient = request.server.queue().getQueueClient(request)
-          const message = await request.server.queue().getMessage(queueClient, request)
+          const queueClient = request.server.queue().getQueueClient(request.url.pathname)
+          request.logger.debug({ queueName: queueClient.name })
+
+          const message = await request.server.queue().getMessage(queueClient)
+          request.logger.debug({ message }, 'processed message')
+
           return getResponse(message, request, h)
         } catch (err) {
           request.logger.debug(err, 'failed to connect to queue, falling back to proxy')
