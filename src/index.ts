@@ -4,6 +4,7 @@ import { resolve } from 'path'
 
 import routes from './routes'
 import Mx from './clients/mx'
+import Queue from './clients/queue'
 
 async function start(): Promise<void> {
   const server = new Hapi.Server({
@@ -47,6 +48,18 @@ async function start(): Promise<void> {
   })
   server.decorate('server', 'mx', function (): Mx {
     return mx
+  })
+
+  if (!process.env.AZURE_STORAGE_CONNSTR) {
+    server.logger.error('Missing AZURE_STORAGE_CONNSTR')
+    process.exit(1)
+  }
+
+  const queue = new Queue(server, {
+    connStr: process.env.AZURE_STORAGE_CONNSTR,
+  })
+  server.decorate('server', 'queue', function (): Queue {
+    return queue
   })
 
   routes(server)
