@@ -22,7 +22,7 @@ export default function register(server: Server): void {
           request.logger.debug({ caches }, 'caches')
           return { caches, total: caches.length }
         } catch (err) {
-          request.logger.debug(err, 'failed to connect to queue')
+          request.logger.error(err, 'failed to connect to queue')
           return badGateway('failed to connect to queue')
         }
       },
