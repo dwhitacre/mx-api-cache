@@ -208,6 +208,6 @@ td {
 }
 
 td:last-child {
-  text-align: center;
+  text-align: left;
   padding-right: 1.5rem;
 }

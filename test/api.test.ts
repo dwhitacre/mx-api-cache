@@ -103,6 +103,10 @@ describe('api', function () {
         queueClient = queue.client.getQueueClient(queueName)
       })
 
+      afterAll(async function () {
+        return queue.client.deleteQueue(queueName)
+      })
+
       it('should return a random map from api if queue dne', async function () {
         await queue.client.deleteQueue(queueName)
 
@@ -270,6 +274,61 @@ describe('api', function () {
           await assertResponse(247)
         })
       })
+    })
+  })
+
+  describe('caches', function () {
+    const pathname = '/mx/test'
+    let queue: Queue
+    const queueNames: Array<string> = []
+
+    beforeAll(async function () {
+      queue = new Queue(server, {
+        connStr: azureConnStr,
+      })
+    })
+
+    afterAll(async function () {
+      for await (const name of queueNames) {
+        try {
+          await queue.client.deleteQueue(name)
+        } catch {}
+      }
+    })
+
+    const createQueue = async (n: number) => {
+      const queueName = queue.getQueueName(pathname + n)
+      try {
+        await queue.client.deleteQueue(queueName)
+      } catch {}
+      await queue.client.createQueue(queueName)
+      queueNames.push(queueName)
+      return queue.client.getQueueClient(queueName)
+    }
+
+    it('should return all the caches and their sizes', async function () {
+      const queueClient1 = await createQueue(1)
+      await createQueue(2)
+      const queueClient3 = await createQueue(3)
+
+      await queueClient1.sendMessage('test')
+      await queueClient1.sendMessage('test')
+      await queueClient1.sendMessage('test')
+      await queueClient1.sendMessage('test')
+      await queueClient1.sendMessage('test')
+
+      await queueClient3.sendMessage('test')
+      await queueClient3.sendMessage('test')
+      await queueClient3.sendMessage('test')
+
+      const response = await fetch(`${url}/caches`)
+      const data = await response.json()
+
+      expect(data.caches).toHaveLength(3)
+      expect(data.total).toBe(3)
+      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-test1', size: 5 }))
+      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-test2', size: 0 }))
+      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-test3', size: 3 }))
     })
   })
 })

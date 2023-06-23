@@ -23,7 +23,6 @@
             <tr>
               <th>Cache</th>
               <th>Size</th>
-              <th>Enabled</th>
             </tr>
           </thead>
           <tbody id="caches-table-body"></tbody>
@@ -46,7 +45,7 @@
     </main>
   </body>
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
   <script>
     ;(function() {
       function failed() {
@@ -58,24 +57,17 @@
         return $('<td>').text(text)
       }
 
-      function getStatusEmoji(cache) {
-        if (!cache.enabled) return '❌'
-        if (cache.hidden) return '👻'
-        return '✔️'
-      }
-
       $.get('../caches', function(data, status) {
         if (status !== 'success') return failed()
-        if (!data) return failed()
+        if (!data?.caches) return failed()
 
-        var cachesList = Object.keys(data).sort()
+        var cachesList = Array.from(data.caches).sort((cacheA, cacheB) => cacheA.size > cacheB.size)
         var tbody = $('#caches-table-body')
 
         cachesList.forEach(function(cache) {
           var tr = $('<tr>')
-            .append(td(data[cache].usage))
-            .append(td(data[cache].desc))
-            .append(td(getStatusEmoji(data[cache])))
+            .append(td(cache.name))
+            .append(td(cache.size))
 
           tbody.append(tr)
         })
