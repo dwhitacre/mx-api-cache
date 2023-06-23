@@ -1,7 +1,9 @@
 import { Server } from '@hapi/hapi'
 import 'dotenv/config'
-import Queue from '../src/clients/queue'
+import Queue, { Message } from '../src/clients/queue'
+import Blob from '../src/clients/blob'
 import { QueueClient } from '@azure/storage-queue'
+import { ContainerClient } from '@azure/storage-blob'
 
 const url = `http://${process.env.HOST}:${process.env.PORT}`
 const server = {} as Server
@@ -68,6 +70,26 @@ describe('api', function () {
       let queueName: string
       let queueClient: QueueClient
 
+      const createResponse = async (n: number, bodyBlob?: string) => {
+        const body = `{ "results": [{ "TrackID": ${n} }] }`
+        const response = {
+          body: bodyBlob ?? body,
+          isBodyBlob: !!bodyBlob,
+          status: n,
+          headers: { Test: `Header${n}` },
+        } as Message
+        await queueClient.sendMessage(JSON.stringify(response))
+        return body
+      }
+
+      const assertResponse = async (n: number) => {
+        const response = await fetch(`${url}${pathname}${search}`)
+        const data = await response.json()
+        expect(response.status).toBe(n)
+        expect(response.headers.get('Test')).toBe(`Header${n}`)
+        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: n }))
+      }
+
       beforeEach(async function () {
         queue = new Queue(server, {
           connStr: azureConnStr,
@@ -127,22 +149,6 @@ describe('api', function () {
       })
 
       it('should return many random maps from queue', async function () {
-        const createResponse = async (n: number) => {
-          const response = {
-            body: `{ "results": [{ "TrackID": ${n} }] }`,
-            status: n,
-            headers: { Test: `Header${n}` },
-          }
-          await queueClient.sendMessage(JSON.stringify(response))
-        }
-        const assertResponse = async (n: number) => {
-          const response = await fetch(`${url}${pathname}${search}`)
-          const data = await response.json()
-          expect(response.status).toBe(n)
-          expect(response.headers.get('Test')).toBe(`Header${n}`)
-          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: n }))
-        }
-
         await createResponse(230)
         await createResponse(231)
         await createResponse(232)
@@ -165,6 +171,104 @@ describe('api', function () {
 
         await createResponse(237)
         await assertResponse(237)
+      })
+
+      describe('with blob', function () {
+        let blob: Blob
+        let containerName: string
+        let containerClient: ContainerClient
+
+        beforeEach(async function () {
+          blob = new Blob(server, {
+            connStr: azureConnStr,
+          })
+          containerName = blob.getContainerName(pathname)
+
+          try {
+            await blob.client.deleteContainer(containerName)
+          } catch {}
+          await blob.client.createContainer(containerName)
+          containerClient = blob.client.getContainerClient(containerName)
+        })
+
+        it('should return a random map from api if blob container dne', async function () {
+          await blob.client.deleteContainer(containerName)
+          await createResponse(240, 'blobman')
+
+          const response = await fetch(`${url}${pathname}${search}`)
+          const data = await response.json()
+
+          expect(response.status).toBe(200)
+          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
+        })
+
+        it('should return a random map from api if blob dne', async function () {
+          await createResponse(240, 'blobman')
+
+          const response = await fetch(`${url}${pathname}${search}`)
+          const data = await response.json()
+
+          expect(response.status).toBe(200)
+          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
+        })
+
+        it('should return a random map from queue if blob exists', async function () {
+          const body = await createResponse(240, 'blobman')
+
+          const blockBlobClient = containerClient.getBlockBlobClient('blobman')
+          await blockBlobClient.upload(body, body.length)
+
+          const response = await fetch(`${url}${pathname}${search}`)
+          const data = await response.json()
+
+          expect(response.status).toBe(240)
+          expect(response.headers.get('Test')).toBe('Header240')
+          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: 240 }))
+        })
+
+        it('should remove the random map returned from blob', async function () {
+          const body = await createResponse(240, 'blobman')
+
+          const blockBlobClient = containerClient.getBlockBlobClient('blobman')
+          await blockBlobClient.upload(body, body.length)
+
+          const response = await fetch(`${url}${pathname}${search}`)
+          await response.json()
+
+          expect(await blockBlobClient.exists()).toBeFalsy()
+        })
+
+        it('should return many random maps from queue from blob', async function () {
+          const createResponseWithBlob = async (n: number, bodyBlob: string) => {
+            const body = await createResponse(n, bodyBlob)
+
+            const blockBlobClient = containerClient.getBlockBlobClient(bodyBlob)
+            await blockBlobClient.upload(body, body.length)
+          }
+
+          await createResponseWithBlob(240, '240')
+          await createResponse(241)
+          await createResponseWithBlob(242, '242')
+          await assertResponse(240)
+          await assertResponse(241)
+          await createResponseWithBlob(243, '243')
+          await assertResponse(242)
+          await createResponseWithBlob(244, '244')
+          await createResponseWithBlob(245, '245')
+          await createResponse(246)
+          await assertResponse(243)
+          await assertResponse(244)
+          await assertResponse(245)
+          await assertResponse(246)
+
+          const response = await fetch(`${url}${pathname}${search}`)
+          const data = await response.json()
+          expect(response.status).toBe(200)
+          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
+
+          await createResponseWithBlob(247, '247')
+          await assertResponse(247)
+        })
       })
     })
   })

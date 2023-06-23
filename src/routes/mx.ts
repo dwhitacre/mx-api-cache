@@ -6,11 +6,21 @@ import { IncomingMessage } from 'http'
 import { Message } from '../clients/queue'
 import { DequeuedMessageItem } from '@azure/storage-queue'
 
-function getResponse(message: DequeuedMessageItem, request: Request, h: ResponseToolkit): ResponseObject {
+async function getBody(json: Message, request: Request) {
+  if (!json.isBodyBlob) return json.body
+
+  const blobClient = await request.server.blob().getBlobClient(request.url.pathname, json.body)
+  return request.server.blob().getBlob(blobClient)
+}
+
+async function getResponse(message: DequeuedMessageItem, request: Request, h: ResponseToolkit): Promise<ResponseObject> {
   const json = JSON.parse(message.messageText) as Message
   request.logger.debug({ json }, 'parsed json')
 
-  const response = h.response(json.body).code(json.status)
+  const body = await getBody(json, request)
+  request.logger.debug('parsed body')
+
+  const response = h.response(body).code(json.status)
   Object.entries(json.headers).forEach(([key, value]) => {
     response.header(key, value)
   })
@@ -31,9 +41,10 @@ export default function register(server: Server): void {
           const message = await request.server.queue().getMessage(queueClient)
           request.logger.debug({ message }, 'processed message')
 
-          return getResponse(message, request, h)
+          const response = await getResponse(message, request, h)
+          return response
         } catch (err) {
-          request.logger.debug(err, 'failed to connect to queue, falling back to proxy')
+          request.logger.debug(err, 'failed to connect to queue or blob, falling back to proxy')
           return h.proxy({
             mapUri: async function (request: Request) {
               const target: ProxyTarget = {

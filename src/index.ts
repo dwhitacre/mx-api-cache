@@ -5,6 +5,7 @@ import { resolve } from 'path'
 import routes from './routes'
 import Mx from './clients/mx'
 import Queue from './clients/queue'
+import Blob from './clients/blob'
 
 async function start(): Promise<void> {
   const server = new Hapi.Server({
@@ -60,6 +61,13 @@ async function start(): Promise<void> {
   })
   server.decorate('server', 'queue', function (): Queue {
     return queue
+  })
+
+  const blob = new Blob(server, {
+    connStr: process.env.AZURE_STORAGE_CONNSTR,
+  })
+  server.decorate('server', 'blob', function (): Blob {
+    return blob
   })
 
   routes(server)

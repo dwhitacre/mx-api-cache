@@ -8,6 +8,10 @@ export interface Message {
   headers: Record<string, string>
 }
 
+export function getQueueName(pathname: string) {
+  return `${pathname.startsWith('/') ? pathname.slice(1) : pathname}`.replaceAll(/[/]/g, '-')
+}
+
 export default class Queue {
   readonly server: Server
   readonly connStr: string
@@ -20,7 +24,7 @@ export default class Queue {
   }
 
   getQueueName(pathname: string) {
-    return `${pathname.startsWith('/') ? pathname.slice(1) : pathname}`.replaceAll(/[/]/g, '-')
+    return getQueueName(pathname)
   }
 
   getQueueClient(pathname: string) {
