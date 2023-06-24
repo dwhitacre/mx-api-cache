@@ -13,16 +13,11 @@ export interface Search {
 export default class Mx {
   readonly server: Server
   readonly baseUrl: string
-  readonly preloadRmcSize: number
   readonly client: typeof Wreck
 
-  readonly searchUrl = 'mapsearch2/search?api=on&random=1&etags=23,37,40&lengthop=1&length=9&vehicles=1&mtype=TM_Race'
-  readonly downloadUrl = 'maps/download'
-
-  constructor(server: Server, { baseUrl, preloadRmcSize }: { baseUrl: string; preloadRmcSize: string }) {
+  constructor(server: Server, { baseUrl }: { baseUrl: string }) {
     this.server = server
     this.baseUrl = baseUrl
-    this.preloadRmcSize = parseInt(preloadRmcSize ?? 0)
 
     this.client = Wreck.defaults({
       baseUrl: this.baseUrl,
@@ -41,13 +36,13 @@ export default class Mx {
     }
   }
 
-  async preloadRmc() {
+  async mapSearch(searchUrl: string) {
     try {
-      const searchResponse = await this.call('get', this.searchUrl, {})
-      if (!searchResponse) throw new Error('failed to map search')
-      const searchBody: Search = await Wreck.read(searchResponse, { json: true })
+      const response = await this.call('get', searchUrl, {})
+      if (!response) throw new Error('failed to map search')
+      const search: Search = await Wreck.read(response, { json: true })
 
-      return { searchResponse, searchBody }
+      return { response, search }
     } catch (err) {
       this.server.logger.error(err, 'failed to preload map')
       return false

@@ -1,7 +1,7 @@
 import { Request, ResponseToolkit, Server } from '@hapi/hapi'
 import pack from '../../package.json'
 import { ProxyTarget } from '@hapi/h2o2'
-import { Boom, badImplementation } from '@hapi/boom'
+import { Boom } from '@hapi/boom'
 import { IncomingMessage } from 'http'
 
 export default function register(server: Server): void {
@@ -74,49 +74,6 @@ export default function register(server: Server): void {
       description: 'Proxy map downloads to the mx api.',
       notes: 'GET proxy map downloads to the mx api.',
       tags: ['api', 'mx'],
-    },
-  })
-
-  server.route({
-    method: 'GET',
-    path: '/mx-preload/rmc',
-    options: {
-      handler: async function (request: Request) {
-        try {
-          const queueClient = await request.server.queue().getQueueClient(`mx/${request.server.mx().searchUrl}`)
-          const properties = await queueClient.getProperties()
-          let currentSize = properties.approximateMessagesCount ?? 0
-
-          while (currentSize < request.server.mx().preloadRmcSize) {
-            const preload = await request.server.mx().preloadRmc()
-            if (!preload) throw new Error('failed to preload')
-            if (preload.searchResponse.statusCode != 200) throw new Error('failed to get successful api call in preload')
-
-            const track = preload.searchBody.results[0]
-            if (!track) throw new Error('failed to find track in preload')
-
-            const trackId = track.TrackID
-            if (!trackId) throw new Error('failed to find track id in track in preload')
-
-            await queueClient.sendMessage(
-              JSON.stringify({
-                body: preload.searchBody,
-                status: preload.searchResponse.statusCode,
-                headers: preload.searchResponse.headers,
-              }),
-            )
-            currentSize++
-          }
-
-          return { status: 'ok', msg: 'preloaded rmc' }
-        } catch (err) {
-          request.logger.error(err, 'failed to preload rmc')
-          return badImplementation('failed to preload rmc')
-        }
-      },
-      description: 'Preload rmc requests to the mx api.',
-      notes: 'GET preload rmc requests to the mx api.',
-      tags: ['api', 'mx', 'preload', 'rmc'],
     },
   })
 }

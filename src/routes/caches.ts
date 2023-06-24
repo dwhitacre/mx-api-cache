@@ -1,5 +1,5 @@
 import { Request, Server } from '@hapi/hapi'
-import { badGateway } from '@hapi/boom'
+import { badGateway, badImplementation } from '@hapi/boom'
 import { QueueMeta } from '../clients/queue'
 import { ContainerMeta } from '../clients/blob'
 
@@ -10,6 +10,16 @@ export interface Backend {
 
 export interface Caches {
   backend: Backend
+}
+
+export interface RMCConfig {
+  size: number
+  searchUrl: string
+  downloadUrl: string
+}
+
+export interface CacheConfig {
+  rmc: RMCConfig
 }
 
 export default function register(server: Server): void {
@@ -41,7 +51,40 @@ export default function register(server: Server): void {
     method: 'GET',
     path: '/caches/rmc',
     options: {
-      handler: async function (request: Request) {},
+      handler: async function (request: Request) {
+        try {
+          const { size, searchUrl } = server.cacheConfig().rmc
+          const queuePathname = `mx/${searchUrl}`
+
+          const queueClient = await server.queue().getQueueClient(queuePathname)
+          const properties = await queueClient.getProperties()
+          let currentSize = properties.approximateMessagesCount ?? 0
+
+          while (currentSize < size) {
+            const preload = await request.server.mx().mapSearch(searchUrl)
+            if (!preload) throw new Error('failed to preload')
+            if (preload.response.statusCode != 200) throw new Error('failed to get successful api call in preload')
+
+            const track = preload.search.results[0]
+            if (!track) throw new Error('failed to find track in preload')
+
+            const trackId = track.TrackID
+            if (!trackId) throw new Error('failed to find track id in track in preload')
+
+            await server.queue().createMessage(queuePathname, {
+              body: JSON.stringify(preload.search),
+              status: preload.response.statusCode,
+              headers: preload.response.headers as Record<string, string>,
+            })
+            currentSize++
+          }
+
+          return { status: 'ok', msg: 'preloaded rmc' }
+        } catch (err) {
+          request.logger.error(err, 'failed to preload rmc')
+          return badImplementation('failed to preload rmc')
+        }
+      },
       description: 'Preload the mx cache',
       notes: 'GET preload the mx cache',
       tags: ['api', 'caches'],

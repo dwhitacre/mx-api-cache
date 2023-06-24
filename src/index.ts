@@ -6,6 +6,7 @@ import routes from './routes'
 import Mx from './clients/mx'
 import Queue from './clients/queue'
 import Blob from './clients/blob'
+import { CacheConfig } from './routes/caches'
 
 async function start(): Promise<void> {
   const server = new Hapi.Server({
@@ -46,7 +47,6 @@ async function start(): Promise<void> {
 
   const mx = new Mx(server, {
     baseUrl: process.env.MX_BASEURL || 'https://trackmania.exchange',
-    preloadRmcSize: process.env.MX_PRELOAD_RMC || '20',
   })
   server.decorate('server', 'mx', function (): Mx {
     return mx
@@ -69,6 +69,16 @@ async function start(): Promise<void> {
   })
   server.decorate('server', 'blob', function (): Blob {
     return blob
+  })
+
+  server.decorate('server', 'cacheConfig', function (): CacheConfig {
+    return {
+      rmc: {
+        size: parseInt(process.env.CACHE_RMC_SIZE ?? '100'),
+        searchUrl: process.env.CACHE_RMC_SEARCHURL ?? 'mapsearch2/search?api=on&random=1&etags=23,37,40&lengthop=1&length=9&vehicles=1&mtype=TM_Race',
+        downloadUrl: process.env.CACHE_RMC_DOWNLOADURL ?? 'maps/download',
+      },
+    }
   })
 
   routes(server)

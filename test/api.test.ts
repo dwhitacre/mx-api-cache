@@ -206,32 +206,6 @@ describe('api', function () {
     })
   })
 
-  describe('/mx-preload/rmc', function () {
-    const pathname = '/mx-preload/rmc'
-    const searchPathname = '/mx/mapsearch2/search'
-    const searchSearch = '?api=on&random=1&etags=23,37,40&lengthop=1&length=9&vehicles=1&mtype=TM_Race'
-    const id = 500
-
-    it('should preload maps to mapsearch', async function () {
-      await fetch(`${url}${pathname}`)
-
-      let response = await fetch(`${url}/caches`)
-      let data = await response.json()
-      expect(data.backend.queues).toHaveLength(1)
-      expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 5 }))
-
-      response = await fetch(`${url}${searchPathname}${searchSearch}`)
-      data = await response.json()
-      expect(response.status).toBe(200)
-      expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
-
-      response = await fetch(`${url}/caches`)
-      data = await response.json()
-      expect(data.backend.queues).toHaveLength(1)
-      expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 4 }))
-    })
-  })
-
   describe('caches', function () {
     it('should return all the queues and their sizes', async function () {
       await queue.createMessage('/mx/test1', queueContent())
@@ -265,6 +239,31 @@ describe('api', function () {
 
       expect(data.backend.containers).toHaveLength(1)
       expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 3 }))
+    })
+
+    describe('/caches/rmc', function () {
+      const pathname = '/caches/rmc'
+      const searchUrl = `/mx/${process.env.CACHE_RMC_SEARCHURL}`
+      const size = parseInt(process.env.CACHE_RMC_SIZE ?? '5')
+
+      it('should preload maps to mapsearch', async function () {
+        await fetch(`${url}${pathname}`)
+
+        let response = await fetch(`${url}/caches`)
+        let data = await response.json()
+        expect(data.backend.queues).toHaveLength(1)
+        expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size }))
+
+        response = await fetch(`${url}${searchUrl}`)
+        data = await response.json()
+        expect(response.status).toBe(200)
+        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: 500 }))
+
+        response = await fetch(`${url}/caches`)
+        data = await response.json()
+        expect(data.backend.queues).toHaveLength(1)
+        expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: size - 1 }))
+      })
     })
   })
 })
