@@ -32,11 +32,102 @@ describe('api', function () {
     const id = 500
 
     describe('maps/download/:id', function () {
-      it('should return the map file', async function () {
-        const response = await fetch(`${url}/mx/maps/download/${id}`)
+      const pathname = '/mx/maps/download'
+      const body = 'bodymap'
+      let blob: Blob
+      let containerName: string
+      let containerClient: ContainerClient
+
+      beforeEach(async function () {
+        blob = new Blob(server, {
+          connStr: azureConnStr,
+        })
+        containerName = blob.getContainerName(pathname)
+
+        try {
+          await blob.client.deleteContainer(containerName)
+        } catch {}
+        await blob.client.createContainer(containerName)
+        containerClient = blob.client.getContainerClient(containerName)
+      })
+
+      it('should download map from api if blob container dne', async function () {
+        await blob.client.deleteContainer(containerName)
+
+        const response = await fetch(`${url}${pathname}/${id}`)
+        const data = await response.text()
+
+        expect(response.status).toBe(200)
+        expect(data).toBe('map')
+      })
+
+      it('should download map from api if blob dne', async function () {
+        const response = await fetch(`${url}${pathname}/${id}`)
+        const data = await response.text()
+
+        expect(response.status).toBe(200)
+        expect(data).toBe('map')
+      })
+
+      it('should download map from blob if blob exists', async function () {
+        const blockBlobClient = containerClient.getBlockBlobClient(id.toString())
+        await blockBlobClient.upload(body, body.length)
+
+        const response = await fetch(`${url}${pathname}/${id}`)
+        const data = await response.text()
+
+        expect(response.status).toBe(200)
+        expect(data).toBe(body)
+      })
+
+      it('should remove the map downloaded from blob', async function () {
+        const blockBlobClient = containerClient.getBlockBlobClient(id.toString())
+        await blockBlobClient.upload(body, body.length)
+
+        const response = await fetch(`${url}${pathname}/${id}`)
+        await response.text()
+
+        expect(await blockBlobClient.exists()).toBeFalsy()
+      })
+
+      it('should download many maps from blob', async function () {
+        const createBlob = async (n: number) => {
+          const bodyBlob = `${body}${n}`
+
+          const blockBlobClient = containerClient.getBlockBlobClient(n.toString())
+          await blockBlobClient.upload(bodyBlob, bodyBlob.length)
+        }
+
+        const assertResponse = async (n: number) => {
+          const response = await fetch(`${url}${pathname}/${n}`)
+          const data = await response.text()
+
+          expect(response.status).toBe(200)
+          expect(data).toBe(`${body}${n}`)
+        }
+
+        await createBlob(240)
+        await createBlob(241)
+        await assertResponse(240)
+        await assertResponse(241)
+        await createBlob(242)
+        await assertResponse(242)
+        await createBlob(243)
+        await createBlob(244)
+        await createBlob(245)
+        await createBlob(246)
+        await assertResponse(243)
+        await assertResponse(244)
+        await assertResponse(245)
+        await assertResponse(246)
+
+        const response = await fetch(`${url}${pathname}/247`)
         const data = await response.text()
         expect(response.status).toBe(200)
         expect(data).toBe('map')
+
+        await createBlob(247)
+        await assertResponse(247)
       })
     })
 
@@ -73,8 +164,7 @@ describe('api', function () {
       const createResponse = async (n: number, bodyBlob?: string) => {
         const body = `{ "results": [{ "TrackID": ${n} }] }`
         const response = {
-          body: bodyBlob ?? body,
-          isBodyBlob: !!bodyBlob,
+          body,
           status: n,
           headers: { Test: `Header${n}` },
         } as Message
@@ -175,104 +265,6 @@ describe('api', function () {
 
         await createResponse(237)
         await assertResponse(237)
-      })
-
-      describe('with blob', function () {
-        let blob: Blob
-        let containerName: string
-        let containerClient: ContainerClient
-
-        beforeEach(async function () {
-          blob = new Blob(server, {
-            connStr: azureConnStr,
-          })
-          containerName = blob.getContainerName(pathname)
-
-          try {
-            await blob.client.deleteContainer(containerName)
-          } catch {}
-          await blob.client.createContainer(containerName)
-          containerClient = blob.client.getContainerClient(containerName)
-        })
-
-        it('should return a random map from api if blob container dne', async function () {
-          await blob.client.deleteContainer(containerName)
-          await createResponse(240, 'blobman')
-
-          const response = await fetch(`${url}${pathname}${search}`)
-          const data = await response.json()
-
-          expect(response.status).toBe(200)
-          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
-        })
-
-        it('should return a random map from api if blob dne', async function () {
-          await createResponse(240, 'blobman')
-
-          const response = await fetch(`${url}${pathname}${search}`)
-          const data = await response.json()
-
-          expect(response.status).toBe(200)
-          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
-        })
-
-        it('should return a random map from queue if blob exists', async function () {
-          const body = await createResponse(240, 'blobman')
-
-          const blockBlobClient = containerClient.getBlockBlobClient('blobman')
-          await blockBlobClient.upload(body, body.length)
-
-          const response = await fetch(`${url}${pathname}${search}`)
-          const data = await response.json()
-
-          expect(response.status).toBe(240)
-          expect(response.headers.get('Test')).toBe('Header240')
-          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: 240 }))
-        })
-
-        it('should remove the random map returned from blob', async function () {
-          const body = await createResponse(240, 'blobman')
-
-          const blockBlobClient = containerClient.getBlockBlobClient('blobman')
-          await blockBlobClient.upload(body, body.length)
-
-          const response = await fetch(`${url}${pathname}${search}`)
-          await response.json()
-
-          expect(await blockBlobClient.exists()).toBeFalsy()
-        })
-
-        it('should return many random maps from queue from blob', async function () {
-          const createResponseWithBlob = async (n: number, bodyBlob: string) => {
-            const body = await createResponse(n, bodyBlob)
-
-            const blockBlobClient = containerClient.getBlockBlobClient(bodyBlob)
-            await blockBlobClient.upload(body, body.length)
-          }
-
-          await createResponseWithBlob(240, '240')
-          await createResponse(241)
-          await createResponseWithBlob(242, '242')
-          await assertResponse(240)
-          await assertResponse(241)
-          await createResponseWithBlob(243, '243')
-          await assertResponse(242)
-          await createResponseWithBlob(244, '244')
-          await createResponseWithBlob(245, '245')
-          await createResponse(246)
-          await assertResponse(243)
-          await assertResponse(244)
-          await assertResponse(245)
-          await assertResponse(246)
-
-          const response = await fetch(`${url}${pathname}${search}`)
-          const data = await response.json()
-          expect(response.status).toBe(200)
-          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
-
-          await createResponseWithBlob(247, '247')
-          await assertResponse(247)
-        })
       })
     })
   })

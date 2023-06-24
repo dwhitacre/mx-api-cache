@@ -1,9 +1,8 @@
-import { Server } from '@hapi/hapi'
+import { Request, ResponseObject, ResponseToolkit, Server } from '@hapi/hapi'
 import { DequeuedMessageItem, QueueClient, QueueServiceClient } from '@azure/storage-queue'
 
 export interface Message {
   body: string
-  isBodyBlob?: boolean
   status: number
   headers: Record<string, string>
 }
@@ -40,5 +39,17 @@ export default class Queue {
     await queueClient.deleteMessage(message.messageId, message.popReceipt)
 
     return message
+  }
+
+  async toResponse(message: DequeuedMessageItem, request: Request, h: ResponseToolkit): Promise<ResponseObject> {
+    const json = JSON.parse(message.messageText) as Message
+    request.logger.debug({ json }, 'parsed json')
+
+    const response = h.response(json.body).code(json.status)
+    Object.entries(json.headers).forEach(([key, value]) => {
+      response.header(key, value)
+    })
+
+    return response
   }
 }

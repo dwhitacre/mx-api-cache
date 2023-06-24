@@ -29,6 +29,7 @@ export default class Blob {
   }
 
   async getBlob(blobClient: BlobClient) {
+    if (!(await blobClient.exists())) return null
     const download = await blobClient.download()
     await blobClient.deleteIfExists()
     return download.readableStreamBody
