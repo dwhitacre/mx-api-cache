@@ -22,7 +22,7 @@
           <thead>
             <tr>
               <th>Cache</th>
-              <th>Size</th>
+              <th>Config</th>
             </tr>
           </thead>
           <tbody id="caches-table-body"></tbody>
@@ -95,12 +95,19 @@
         if (status !== 'success') return failed()
         if (!data?.backend?.queues) return failed()
         if (!data?.backend?.containers) return failed()
+        if (!data?.rmc) return failed()
 
         var backendList = sortSize(
           addType(data.backend.queues, 'Queue').concat(
             addType(data.backend.containers, 'Container')
           ))
         append('#backend-table-body', backendList)
+
+        var cacheBody = $('#caches-table-body')
+        var tr = $('<tr>')
+          .append(td('rmc'))
+          .append(td(JSON.stringify(data.rmc, null, 2)))
+        cacheBody.append(tr)
       })
     })()
   </script>

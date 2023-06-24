@@ -10,6 +10,7 @@ export interface Backend {
 
 export interface Caches {
   backend: Backend
+  rmc: RMCConfig
 }
 
 export interface RMCConfig {
@@ -28,7 +29,10 @@ export default function register(server: Server): void {
     path: '/caches',
     options: {
       handler: async function (request: Request) {
-        const caches: Caches = { backend: { queues: [], containers: [] } }
+        const caches: Caches = {
+          backend: { queues: [], containers: [] },
+          rmc: { ...server.cacheConfig().rmc },
+        }
 
         try {
           caches.backend.queues = await server.queue().list()
