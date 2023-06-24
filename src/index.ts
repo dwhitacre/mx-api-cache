@@ -75,10 +75,32 @@ async function start(): Promise<void> {
     return {
       rmc: {
         size: parseInt(process.env.CACHE_RMC_SIZE ?? '100'),
+        schedule: process.env.CACHE_RMC_SCHEDULE ?? '*/10 * * * * *',
         searchUrl: process.env.CACHE_RMC_SEARCHURL ?? 'mapsearch2/search?api=on&random=1&etags=23,37,40&lengthop=1&length=9&vehicles=1&mtype=TM_Race',
         downloadUrl: process.env.CACHE_RMC_DOWNLOADURL ?? 'maps/download',
       },
     }
+  })
+
+  await server.register({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    plugin: (await import('hapi-cron')) as any,
+    options: {
+      jobs: [
+        {
+          name: 'caches/rmc',
+          time: server.cacheConfig().rmc.schedule,
+          timezone: 'Europe/London',
+          request: {
+            method: 'GET',
+            url: '/caches/rmc',
+          },
+          onComplete: (response: Response) => {
+            server.logger.debug({ response }, 'caches/rmc ran')
+          },
+        },
+      ],
+    },
   })
 
   routes(server)

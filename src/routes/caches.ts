@@ -15,6 +15,7 @@ export interface Caches {
 
 export interface RMCConfig {
   size: number
+  schedule: string
   searchUrl: string
   downloadUrl: string
 }

@@ -1465,6 +1465,11 @@
   resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-11.0.2.tgz#cb3ea547daac7de5c9cf1d960c3f35c34f065427"
   integrity sha512-aKmlCO57XFZ26wso4rJsW4oTUnrgTFw2jh3io7CAtO9w4UltBNwRXvXIVzzyfkaaLRo3nluP/19msA8vDUUuKw==
 
+"@hapi/hoek@^6.1.2":
+  version "6.2.4"
+  resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-6.2.4.tgz#4b95fbaccbfba90185690890bdf1a2fbbda10595"
+  integrity sha512-HOJ20Kc93DkDVvjwHyHawPwPkX44sIrbXazAUDiUXaY2R9JwQGo2PhFfnQtdrsIe4igjG2fPgMra7NYw7qhy0A==
+
 "@hapi/hoek@^9.0.0":
   version "9.3.0"
   resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.3.0.tgz#8368869dcb735be2e7f5cb7647de78e167a251fb"
@@ -2759,6 +2764,13 @@ create-require@^1.1.0:
   resolved "https://registry.yarnpkg.com/create-require/-/create-require-1.1.1.tgz#c1d7e8f1e5f6cfc9ff65f9cd352d37348756c333"
   integrity sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==
 
+cron@^1.7.1:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/cron/-/cron-1.8.3.tgz#2a61d7b15848716885834ec56ac072f4b9744ebd"
+  integrity sha512-JYR/QZFklJCIPndBLfd/2nU1nSlCMrUdtQ2mGLXSVM/qqqEK7DOrFR0gsEiyeqs0PdWrs0ve1ggH4V7XksDwXg==
+  dependencies:
+    luxon "^1.23.x"
+
 cross-spawn@^7.0.2, cross-spawn@^7.0.3:
   version "7.0.3"
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-7.0.3.tgz#f73a85b9d5d41d045551c177e2882d4ac85728a6"
@@ -3448,6 +3460,14 @@ handlebars@^4.7.7:
     wordwrap "^1.0.0"
   optionalDependencies:
     uglify-js "^3.1.4"
+
+hapi-cron@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/hapi-cron/-/hapi-cron-1.1.0.tgz#e0dfebcbe6af9ac3a6db47a6465c6b9cd8b940be"
+  integrity sha512-u/Ng8VSsh9Y+1KHVThs39lwS2pMTU27KAYibGc2SMeX9/cNrCqWCYODOub17DJ/lTe/tSFvj4uKSOvbrk2cjIw==
+  dependencies:
+    "@hapi/hoek" "^6.1.2"
+    cron "^1.7.1"
 
 hapi-pino@^12.1.0:
   version "12.1.0"
@@ -4217,6 +4237,11 @@ lru-cache@^7.14.1:
   version "7.18.3"
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-7.18.3.tgz#f793896e0fd0e954a59dfdd82f0773808df6aa89"
   integrity sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==
+
+luxon@^1.23.x:
+  version "1.28.1"
+  resolved "https://registry.yarnpkg.com/luxon/-/luxon-1.28.1.tgz#528cdf3624a54506d710290a2341aa8e6e6c61b0"
+  integrity sha512-gYHAa180mKrNIUJCbwpmD0aTu9kV0dREDrwNnuyFAsO1Wt0EVYSZelPnJlbj9HplzXX/YWXHFTL45kvZ53M0pw==
 
 make-dir@^3.0.0:
   version "3.1.0"
