@@ -46,6 +46,7 @@ async function start(): Promise<void> {
 
   const mx = new Mx(server, {
     baseUrl: process.env.MX_BASEURL || 'https://trackmania.exchange',
+    preloadRmcSize: process.env.MX_PRELOAD_RMC || '20',
   })
   server.decorate('server', 'mx', function (): Mx {
     return mx

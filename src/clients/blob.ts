@@ -34,4 +34,18 @@ export default class Blob {
     await blobClient.deleteIfExists()
     return download.readableStreamBody
   }
+
+  async createContainerClient(pathname: string) {
+    const containerName = this.getContainerName(pathname)
+
+    try {
+      await this.client.createContainer(containerName)
+    } catch {}
+    return this.client.getContainerClient(containerName)
+  }
+
+  async createBlobClient(pathname: string, blobname: string) {
+    const containerClient = await this.createContainerClient(pathname)
+    return containerClient.getBlobClient(blobname)
+  }
 }
