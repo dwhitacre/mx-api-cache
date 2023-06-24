@@ -7,7 +7,37 @@ import { ContainerClient } from '@azure/storage-blob'
 
 const url = `http://${process.env.HOST}:${process.env.PORT}`
 const server = {} as Server
-const azureConnStr = `${process.env.AZURE_STORAGE_CONNSTR}`
+const azureConnStr =
+  'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;'
+let queue: Queue
+let blob: Blob
+const trackId = 501
+const blobContent = {
+  body: 'bodymap',
+  status: 250,
+  headers: { Test: 'Header' },
+}
+const queueContent = (id = trackId) => ({
+  body: `{ "results": [{ "TrackID": ${id} }] }`,
+  status: 260,
+  headers: { Test: 'Header' },
+})
+
+beforeEach(async () => {
+  queue = new Queue(server, {
+    connStr: azureConnStr,
+  })
+  blob = new Blob(server, {
+    connStr: azureConnStr,
+  })
+
+  for await (const queueClient of queue.client.listQueues()) {
+    await queue.client.deleteQueue(queueClient.name)
+  }
+  for await (const containerClient of blob.client.listContainers()) {
+    await blob.client.deleteContainer(containerClient.name)
+  }
+})
 
 describe('api', function () {
   describe('/health', function () {
@@ -29,114 +59,74 @@ describe('api', function () {
   })
 
   describe('/mx/*', function () {
-    const id = 500
-
     describe('maps/download/:id', function () {
       const pathname = '/mx/maps/download'
-      const body = 'bodymap'
-      let blob: Blob
-      let containerName: string
-      let containerClient: ContainerClient
-
-      beforeEach(async function () {
-        blob = new Blob(server, {
-          connStr: azureConnStr,
-        })
-        containerName = blob.getContainerName(pathname)
-
-        try {
-          await blob.client.deleteContainer(containerName)
-        } catch {}
-        await blob.client.createContainer(containerName)
-        containerClient = blob.client.getContainerClient(containerName)
-      })
-
-      it('should download map from api if blob container dne', async function () {
-        await blob.client.deleteContainer(containerName)
-
+      const expectAPI = async (id = trackId) => {
         const response = await fetch(`${url}${pathname}/${id}`)
         const data = await response.text()
 
         expect(response.status).toBe(200)
+        expect(response.headers.get('Cache-Control')).toBe('private')
         expect(data).toBe('map')
+      }
+      const expectBlob = async (id = trackId) => {
+        const response = await fetch(`${url}${pathname}/${id}`)
+        const data = await response.text()
+
+        expect(response.status).toBe(blobContent.status)
+        expect(response.headers.get('Test')).toBe('Header')
+        expect(data).toBe(blobContent.body)
+      }
+
+      it('should download map from api if blob container dne', async function () {
+        const containerClient = await blob.getContainerClient(pathname)
+        await blob.client.deleteContainer(containerClient.containerName)
+        await expectAPI()
       })
 
       it('should download map from api if blob dne', async function () {
-        const response = await fetch(`${url}${pathname}/${id}`)
-        const data = await response.text()
-
-        expect(response.status).toBe(200)
-        expect(data).toBe('map')
+        await blob.getContainerClient(pathname)
+        await expectAPI()
       })
 
       it('should download map from blob if blob exists', async function () {
-        const blockBlobClient = containerClient.getBlockBlobClient(id.toString())
-        await blockBlobClient.upload(body, body.length)
-
-        const response = await fetch(`${url}${pathname}/${id}`)
-        const data = await response.text()
-
-        expect(response.status).toBe(200)
-        expect(data).toBe(body)
+        await blob.createBlob(pathname, trackId.toString(), blobContent)
+        await expectBlob()
       })
 
       it('should remove the map downloaded from blob', async function () {
-        const blockBlobClient = containerClient.getBlockBlobClient(id.toString())
-        await blockBlobClient.upload(body, body.length)
-
-        const response = await fetch(`${url}${pathname}/${id}`)
-        await response.text()
-
-        expect(await blockBlobClient.exists()).toBeFalsy()
+        await blob.createBlob(pathname, trackId.toString(), blobContent)
+        await fetch(`${url}${pathname}/${trackId}`)
+        await expectAPI()
       })
 
       it('should download many maps from blob', async function () {
-        const createBlob = async (n: number) => {
-          const bodyBlob = `${body}${n}`
-
-          const blockBlobClient = containerClient.getBlockBlobClient(n.toString())
-          await blockBlobClient.upload(bodyBlob, bodyBlob.length)
-        }
-
-        const assertResponse = async (n: number) => {
-          const response = await fetch(`${url}${pathname}/${n}`)
-          const data = await response.text()
-
-          expect(response.status).toBe(200)
-          expect(data).toBe(`${body}${n}`)
-        }
-
-        await createBlob(240)
-        await createBlob(241)
-        await assertResponse(240)
-        await assertResponse(241)
-        await createBlob(242)
-        await assertResponse(242)
-        await createBlob(243)
-        await createBlob(244)
-        await createBlob(245)
-        await createBlob(246)
-        await assertResponse(243)
-        await assertResponse(244)
-        await assertResponse(245)
-        await assertResponse(246)
-
-        const response = await fetch(`${url}${pathname}/247`)
-        const data = await response.text()
-        expect(response.status).toBe(200)
-        expect(data).toBe('map')
-
-        await createBlob(247)
-        await assertResponse(247)
+        await blob.createBlob(pathname, '240', blobContent)
+        await blob.createBlob(pathname, '241', blobContent)
+        await expectBlob(240)
+        await expectBlob(241)
+        await blob.createBlob(pathname, '242', blobContent)
+        await expectBlob(242)
+        await blob.createBlob(pathname, '243', blobContent)
+        await blob.createBlob(pathname, '244', blobContent)
+        await blob.createBlob(pathname, '245', blobContent)
+        await blob.createBlob(pathname, '246', blobContent)
+        await expectBlob(243)
+        await expectBlob(244)
+        await expectBlob(245)
+        await expectBlob(246)
+        await expectAPI(247)
+        await blob.createBlob(pathname, '247', blobContent)
+        await expectBlob(247)
       })
     })
 
     describe('api/maps/get_map_info/multi/:id', function () {
       it('should return the map info for the id', async function () {
-        const response = await fetch(`${url}/mx/api/maps/get_map_info/multi/${id}`)
+        const response = await fetch(`${url}/mx/api/maps/get_map_info/multi/500`)
         const data = await response.json()
         expect(response.status).toBe(200)
-        expect(data).toContainEqual(expect.objectContaining({ TrackID: id }))
+        expect(data).toContainEqual(expect.objectContaining({ TrackID: 500 }))
       })
     })
 
@@ -157,114 +147,63 @@ describe('api', function () {
     describe('mapsearch2/search', function () {
       const pathname = '/mx/mapsearch2/search'
       const search = '?api=on&random=1&etags=23,37,40&lengthop=1&length=9&vehicles=1&mtype=TM_Race'
-      let queue: Queue
-      let queueName: string
-      let queueClient: QueueClient
-
-      const createResponse = async (n: number) => {
-        const body = `{ "results": [{ "TrackID": ${n} }] }`
-        const response = {
-          body,
-          status: n,
-          headers: { Test: `Header${n}` },
-        } as Message
-        await queueClient.sendMessage(JSON.stringify(response))
-        return body
-      }
-
-      const assertResponse = async (n: number) => {
-        const response = await fetch(`${url}${pathname}${search}`)
-        const data = await response.json()
-        expect(response.status).toBe(n)
-        expect(response.headers.get('Test')).toBe(`Header${n}`)
-        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: n }))
-      }
-
-      beforeEach(async function () {
-        queue = new Queue(server, {
-          connStr: azureConnStr,
-        })
-        queueName = queue.getQueueName(pathname)
-
-        try {
-          await queue.client.deleteQueue(queueName)
-        } catch {}
-        await queue.client.createQueue(queueName)
-        queueClient = queue.client.getQueueClient(queueName)
-      })
-
-      afterAll(async function () {
-        return queue.client.deleteQueue(queueName)
-      })
-
-      it('should return a random map from api if queue dne', async function () {
-        await queue.client.deleteQueue(queueName)
-
+      const expectAPI = async () => {
         const response = await fetch(`${url}${pathname}${search}`)
         const data = await response.json()
 
         expect(response.status).toBe(200)
-        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
+        expect(response.headers.get('Cache-Control')).toBe('private')
+        expect(data?.results).toContainEqual(expect.objectContaining({ TrackID: 500 }))
+      }
+      const expectQueue = async (id = trackId) => {
+        const response = await fetch(`${url}${pathname}${search}`)
+        const data = await response.json()
+
+        expect(response.status).toBe(queueContent().status)
+        expect(response.headers.get('Test')).toBe('Header')
+        expect(data?.results).toContainEqual(expect.objectContaining({ TrackID: id }))
+      }
+
+      it('should return a random map from api if queue dne', async function () {
+        const queueClient = await queue.getQueueClient(pathname)
+        await queue.client.deleteQueue(queueClient.name)
+        await expectAPI()
       })
 
       it('should return a random map from api if queue is empty', async function () {
-        const response = await fetch(`${url}${pathname}${search}`)
-        const data = await response.json()
-
-        expect(response.status).toBe(200)
-        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
+        await queue.getQueueClient(pathname)
+        await expectAPI()
       })
 
       it('should return a random map from queue', async function () {
-        const body = '{ "results": [{ "TrackID": 123 }] }'
-        const status = 234
-        const headers = { Test: 'Header' }
-        await queueClient.sendMessage(JSON.stringify({ body, status, headers }))
-
-        const response = await fetch(`${url}${pathname}${search}`)
-        const data = await response.json()
-
-        expect(response.status).toBe(234)
-        expect(response.headers.get('Test')).toBe('Header')
-        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: 123 }))
+        await queue.createMessage(pathname, queueContent())
+        await expectQueue()
       })
 
       it('should remove the random map returned from queue', async function () {
-        const body = '{ "results": [{ "TrackID": 123 }] }'
-        const status = 234
-        const headers = { Test: 'Header' }
-        await queueClient.sendMessage(JSON.stringify({ body, status, headers }))
-
-        const response = await fetch(`${url}${pathname}${search}`)
-        await response.json()
-
-        const messages = await queueClient.receiveMessages()
-        expect(messages.receivedMessageItems).toHaveLength(0)
+        await queue.createMessage(pathname, queueContent())
+        await fetch(`${url}${pathname}${search}`)
+        await expectAPI()
       })
 
       it('should return many random maps from queue', async function () {
-        await createResponse(230)
-        await createResponse(231)
-        await createResponse(232)
-        await assertResponse(230)
-        await assertResponse(231)
-        await createResponse(233)
-        await assertResponse(232)
-        await createResponse(234)
-        await createResponse(235)
-        await createResponse(236)
-        await assertResponse(233)
-        await assertResponse(234)
-        await assertResponse(235)
-        await assertResponse(236)
-
-        const response = await fetch(`${url}${pathname}${search}`)
-        const data = await response.json()
-        expect(response.status).toBe(200)
-        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
-
-        await createResponse(237)
-        await assertResponse(237)
+        await queue.createMessage(pathname, queueContent(230))
+        await queue.createMessage(pathname, queueContent(231))
+        await expectQueue(230)
+        await expectQueue(231)
+        await queue.createMessage(pathname, queueContent(232))
+        await expectQueue(232)
+        await queue.createMessage(pathname, queueContent(233))
+        await queue.createMessage(pathname, queueContent(234))
+        await queue.createMessage(pathname, queueContent(235))
+        await queue.createMessage(pathname, queueContent(236))
+        await expectQueue(233)
+        await expectQueue(234)
+        await expectQueue(235)
+        await expectQueue(236)
+        await expectAPI()
+        await queue.createMessage(pathname, queueContent(237))
+        await expectQueue(237)
       })
     })
   })

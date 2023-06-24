@@ -11,7 +11,7 @@ export default function register(server: Server): void {
     options: {
       handler: async function (request: Request, h: ResponseToolkit) {
         try {
-          const queueClient = request.server.queue().getQueueClient(request.url.pathname)
+          const queueClient = await request.server.queue().getQueueClient(request.url.pathname)
           request.logger.debug({ queueName: queueClient.name })
 
           const message = await request.server.queue().getMessage(queueClient)
@@ -49,12 +49,10 @@ export default function register(server: Server): void {
     options: {
       handler: async function (request: Request, h: ResponseToolkit) {
         try {
-          const blobClient = await request.server.blob().getBlobClient('/mx/maps/download', request.params.id)
-
-          const blob = await request.server.blob().getBlob(blobClient)
+          const blob = await request.server.blob().getBlob('/mx/maps/download', request.params.id)
           if (!blob) throw new Error(`blob dne for id ${request.params.id}`)
 
-          return blob
+          return request.server.blob().toResponse(blob, request, h)
         } catch (err) {
           request.logger.debug(err, 'failed to connect to blob, falling back to proxy')
           return h.proxy({
@@ -85,13 +83,14 @@ export default function register(server: Server): void {
     options: {
       handler: async function (request: Request) {
         try {
-          const queueClient = await request.server.queue().createQueueClient(`mx/${request.server.mx().searchUrl}`)
+          const queueClient = await request.server.queue().getQueueClient(`mx/${request.server.mx().searchUrl}`)
           const properties = await queueClient.getProperties()
           let currentSize = properties.approximateMessagesCount ?? 0
 
           while (currentSize < request.server.mx().preloadRmcSize) {
             const preload = await request.server.mx().preloadRmc()
             if (!preload) throw new Error('failed to preload')
+            if (preload.searchResponse.statusCode != 200) throw new Error('failed to get successful api call in preload')
 
             const track = preload.searchBody.results[0]
             if (!track) throw new Error('failed to find track in preload')
@@ -102,8 +101,8 @@ export default function register(server: Server): void {
             await queueClient.sendMessage(
               JSON.stringify({
                 body: preload.searchBody,
-                status: 200,
-                headers: {},
+                status: preload.searchResponse.statusCode,
+                headers: preload.searchResponse.headers,
               }),
             )
             currentSize++

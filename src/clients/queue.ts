@@ -26,8 +26,12 @@ export default class Queue {
     return getQueueName(pathname)
   }
 
-  getQueueClient(pathname: string) {
+  async getQueueClient(pathname: string) {
     const queueName = this.getQueueName(pathname)
+    try {
+      await this.client.createQueue(queueName)
+      this.server.logger.warn('queue.getQueueClient: queue does not exist, created..')
+    } catch {}
     return this.client.getQueueClient(queueName)
   }
 
@@ -53,11 +57,9 @@ export default class Queue {
     return response
   }
 
-  async createQueueClient(pathname: string) {
-    const queueName = this.getQueueName(pathname)
-    try {
-      await this.client.createQueue(queueName)
-    } catch {}
-    return this.client.getQueueClient(queueName)
+  async createMessage(pathname: string, message: Message) {
+    const queueClient = await this.getQueueClient(pathname)
+    const content = JSON.stringify(message)
+    return queueClient.sendMessage(content)
   }
 }
