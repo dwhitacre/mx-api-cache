@@ -59,9 +59,9 @@
 
       $.get('../caches', function(data, status) {
         if (status !== 'success') return failed()
-        if (!data?.caches) return failed()
+        if (!data?.backend?.queues) return failed()
 
-        var cachesList = Array.from(data.caches).sort((cacheA, cacheB) => cacheA.size > cacheB.size)
+        var cachesList = Array.from(data.backend.queues).sort((cacheA, cacheB) => cacheA.size > cacheB.size)
         var tbody = $('#caches-table-body')
 
         cachesList.forEach(function(cache) {

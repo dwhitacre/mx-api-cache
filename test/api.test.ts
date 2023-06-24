@@ -1,9 +1,7 @@
 import { Server } from '@hapi/hapi'
 import 'dotenv/config'
-import Queue, { Message } from '../src/clients/queue'
+import Queue from '../src/clients/queue'
 import Blob from '../src/clients/blob'
-import { QueueClient } from '@azure/storage-queue'
-import { ContainerClient } from '@azure/storage-blob'
 
 const url = `http://${process.env.HOST}:${process.env.PORT}`
 const server = {} as Server
@@ -219,8 +217,8 @@ describe('api', function () {
 
       let response = await fetch(`${url}/caches`)
       let data = await response.json()
-      expect(data.caches).toHaveLength(1)
-      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 5 }))
+      expect(data.backend.queues).toHaveLength(1)
+      expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 5 }))
 
       response = await fetch(`${url}${searchPathname}${searchSearch}`)
       data = await response.json()
@@ -229,68 +227,32 @@ describe('api', function () {
 
       response = await fetch(`${url}/caches`)
       data = await response.json()
-      expect(data.caches).toHaveLength(1)
-      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 4 }))
+      expect(data.backend.queues).toHaveLength(1)
+      expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 4 }))
     })
   })
 
   describe('caches', function () {
-    const pathname = '/mx/test'
-    let queue: Queue
-    const queueNames: Array<string> = []
+    it('should return all the queues and their sizes', async function () {
+      await queue.createMessage('/mx/test1', queueContent())
+      await queue.createMessage('/mx/test1', queueContent())
+      await queue.createMessage('/mx/test1', queueContent())
+      await queue.createMessage('/mx/test1', queueContent())
+      await queue.createMessage('/mx/test1', queueContent())
 
-    beforeAll(async function () {
-      queue = new Queue(server, {
-        connStr: azureConnStr,
-      })
+      await queue.getQueueClient('/mx/test2')
 
-      const queueList = queue.client.listQueues()
-      for await (const queueListItem of queueList) {
-        await queue.client.deleteQueue(queueListItem.name)
-      }
-    })
-
-    afterAll(async function () {
-      for await (const name of queueNames) {
-        try {
-          await queue.client.deleteQueue(name)
-        } catch {}
-      }
-    })
-
-    const createQueue = async (n: number) => {
-      const queueName = queue.getQueueName(pathname + n)
-      try {
-        await queue.client.deleteQueue(queueName)
-      } catch {}
-      await queue.client.createQueue(queueName)
-      queueNames.push(queueName)
-      return queue.client.getQueueClient(queueName)
-    }
-
-    it('should return all the caches and their sizes', async function () {
-      const queueClient1 = await createQueue(1)
-      await createQueue(2)
-      const queueClient3 = await createQueue(3)
-
-      await queueClient1.sendMessage('test')
-      await queueClient1.sendMessage('test')
-      await queueClient1.sendMessage('test')
-      await queueClient1.sendMessage('test')
-      await queueClient1.sendMessage('test')
-
-      await queueClient3.sendMessage('test')
-      await queueClient3.sendMessage('test')
-      await queueClient3.sendMessage('test')
+      await queue.createMessage('/mx/test3', queueContent())
+      await queue.createMessage('/mx/test3', queueContent())
+      await queue.createMessage('/mx/test3', queueContent())
 
       const response = await fetch(`${url}/caches`)
       const data = await response.json()
 
-      expect(data.caches).toHaveLength(3)
-      expect(data.total).toBe(3)
-      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-test1', size: 5 }))
-      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-test2', size: 0 }))
-      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-test3', size: 3 }))
+      expect(data.backend.queues).toHaveLength(3)
+      expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-test1', size: 5 }))
+      expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-test2', size: 0 }))
+      expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-test3', size: 3 }))
     })
   })
 })

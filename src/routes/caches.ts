@@ -1,5 +1,14 @@
 import { Request, Server } from '@hapi/hapi'
 import { badGateway } from '@hapi/boom'
+import { QueueMeta } from '../clients/queue'
+
+export interface Backend {
+  queues: Array<QueueMeta>
+}
+
+export interface Caches {
+  backend: Backend
+}
 
 export default function register(server: Server): void {
   server.route({
@@ -7,20 +16,13 @@ export default function register(server: Server): void {
     path: '/caches',
     options: {
       handler: async function (request: Request) {
+        const caches: Caches = { backend: { queues: [] } }
+
         try {
-          const queueList = request.server.queue().client.listQueues()
-
-          const caches = []
-          for await (const queueItem of queueList) {
-            const queueClient = request.server.queue().client.getQueueClient(queueItem.name)
-            const properties = await queueClient.getProperties()
-
-            const cache = { name: queueItem.name, size: properties.approximateMessagesCount ?? -1 }
-            caches.push(cache)
-          }
-
+          caches.backend.queues = await server.queue().list()
           request.logger.debug({ caches }, 'caches')
-          return { caches, total: caches.length }
+
+          return caches
         } catch (err) {
           request.logger.error(err, 'failed to connect to queue')
           return badGateway('failed to connect to queue')

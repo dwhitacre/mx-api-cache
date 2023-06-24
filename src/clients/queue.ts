@@ -7,6 +7,11 @@ export interface Message {
   headers: Record<string, string>
 }
 
+export interface QueueMeta {
+  name: string
+  size: number
+}
+
 export function getQueueName(pathname: string) {
   return `${pathname.startsWith('/') ? pathname.slice(1) : pathname}`.replaceAll(/[/]/g, '-')
 }
@@ -61,5 +66,15 @@ export default class Queue {
     const queueClient = await this.getQueueClient(pathname)
     const content = JSON.stringify(message)
     return queueClient.sendMessage(content)
+  }
+
+  async list(): Promise<Array<QueueMeta>> {
+    const queues = []
+    for await (const queueItem of this.client.listQueues()) {
+      const queueClient = this.client.getQueueClient(queueItem.name)
+      const properties = await queueClient.getProperties()
+      queues.push({ name: queueItem.name, size: properties.approximateMessagesCount ?? -1 })
+    }
+    return queues
   }
 }
