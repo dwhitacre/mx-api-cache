@@ -1,6 +1,7 @@
 import { Request, Server } from '@hapi/hapi'
 import { badGateway } from '@hapi/boom'
 import { QueueMeta } from '../clients/queue'
+import { ContainerMeta } from '../clients/blob'
 
 export interface Backend {
   queues: Array<QueueMeta>
@@ -32,6 +33,17 @@ export default function register(server: Server): void {
       },
       description: 'Get all the current caches',
       notes: 'GET all the current caches and their sizes',
+      tags: ['api', 'caches'],
+    },
+  })
+
+  server.route({
+    method: 'GET',
+    path: '/caches/rmc',
+    options: {
+      handler: async function (request: Request) {},
+      description: 'Preload the mx cache',
+      notes: 'GET preload the mx cache',
       tags: ['api', 'caches'],
     },
   })
