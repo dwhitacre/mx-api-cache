@@ -161,7 +161,7 @@ describe('api', function () {
       let queueName: string
       let queueClient: QueueClient
 
-      const createResponse = async (n: number, bodyBlob?: string) => {
+      const createResponse = async (n: number) => {
         const body = `{ "results": [{ "TrackID": ${n} }] }`
         const response = {
           body,
@@ -269,6 +269,32 @@ describe('api', function () {
     })
   })
 
+  describe('/mx-preload/rmc', function () {
+    const pathname = '/mx-preload/rmc'
+    const searchPathname = '/mx/mapsearch2/search'
+    const searchSearch = '?api=on&random=1&etags=23,37,40&lengthop=1&length=9&vehicles=1&mtype=TM_Race'
+    const id = 500
+
+    it('should preload maps to mapsearch', async function () {
+      await fetch(`${url}${pathname}`)
+
+      let response = await fetch(`${url}/caches`)
+      let data = await response.json()
+      expect(data.caches).toHaveLength(1)
+      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 5 }))
+
+      response = await fetch(`${url}${searchPathname}${searchSearch}`)
+      data = await response.json()
+      expect(response.status).toBe(200)
+      expect(data.results).toContainEqual(expect.objectContaining({ TrackID: id }))
+
+      response = await fetch(`${url}/caches`)
+      data = await response.json()
+      expect(data.caches).toHaveLength(1)
+      expect(data.caches).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 4 }))
+    })
+  })
+
   describe('caches', function () {
     const pathname = '/mx/test'
     let queue: Queue
@@ -278,6 +304,11 @@ describe('api', function () {
       queue = new Queue(server, {
         connStr: azureConnStr,
       })
+
+      const queueList = queue.client.listQueues()
+      for await (const queueListItem of queueList) {
+        await queue.client.deleteQueue(queueListItem.name)
+      }
     })
 
     afterAll(async function () {

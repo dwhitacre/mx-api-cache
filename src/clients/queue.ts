@@ -52,4 +52,12 @@ export default class Queue {
 
     return response
   }
+
+  async createQueueClient(pathname: string) {
+    const queueName = this.getQueueName(pathname)
+    try {
+      await this.client.createQueue(queueName)
+    } catch {}
+    return this.client.getQueueClient(queueName)
+  }
 }
