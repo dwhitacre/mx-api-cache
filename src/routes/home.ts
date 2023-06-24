@@ -2,7 +2,7 @@ import { Server } from '@hapi/hapi'
 
 export default function register(server: Server): void {
   server.route({
-    method: 'GET',
+    method: '*',
     path: '/{param*}',
     options: {
       handler: {
