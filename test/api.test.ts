@@ -254,5 +254,17 @@ describe('api', function () {
       expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-test2', size: 0 }))
       expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-test3', size: 3 }))
     })
+
+    it('should return all the containers and their sizes', async function () {
+      await blob.createBlob('/mx/maps/download', '601', blobContent)
+      await blob.createBlob('/mx/maps/download', '602', blobContent)
+      await blob.createBlob('/mx/maps/download', '603', blobContent)
+
+      const response = await fetch(`${url}/caches`)
+      const data = await response.json()
+
+      expect(data.backend.containers).toHaveLength(1)
+      expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 3 }))
+    })
   })
 })

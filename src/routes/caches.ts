@@ -4,6 +4,7 @@ import { QueueMeta } from '../clients/queue'
 
 export interface Backend {
   queues: Array<QueueMeta>
+  containers: Array<ContainerMeta>
 }
 
 export interface Caches {
@@ -16,16 +17,17 @@ export default function register(server: Server): void {
     path: '/caches',
     options: {
       handler: async function (request: Request) {
-        const caches: Caches = { backend: { queues: [] } }
+        const caches: Caches = { backend: { queues: [], containers: [] } }
 
         try {
           caches.backend.queues = await server.queue().list()
-          request.logger.debug({ caches }, 'caches')
+          caches.backend.containers = await server.blob().list()
 
+          request.logger.debug({ caches }, 'caches')
           return caches
         } catch (err) {
-          request.logger.error(err, 'failed to connect to queue')
-          return badGateway('failed to connect to queue')
+          request.logger.error(err, 'failed to connect to backend')
+          return badGateway('failed to connect to backend')
         }
       },
       description: 'Get all the current caches',

@@ -27,6 +27,17 @@
           </thead>
           <tbody id="caches-table-body"></tbody>
         </table>
+        <h4>Backend</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Resource</th>
+              <th>Name</th>
+              <th>Size</th>
+            </tr>
+          </thead>
+          <tbody id="backend-table-body"></tbody>
+        </table>
       </section>
 
       <section class="container" id="failed" style="display:none">
@@ -57,20 +68,39 @@
         return $('<td>').text(text)
       }
 
-      $.get('../caches', function(data, status) {
-        if (status !== 'success') return failed()
-        if (!data?.backend?.queues) return failed()
+      function addType(array, type) {
+        return array
+          .map((item) => ({ ...item, type })) 
+      }
 
-        var cachesList = Array.from(data.backend.queues).sort((cacheA, cacheB) => cacheA.size > cacheB.size)
-        var tbody = $('#caches-table-body')
+      function sortSize(array) {
+        return array
+          .sort((a, b) => b.size - a.size)
+      }
 
-        cachesList.forEach(function(cache) {
+      function append(tbody, array) {
+        var tbody = $(tbody)
+
+        array.forEach(function(item) {
           var tr = $('<tr>')
-            .append(td(cache.name))
-            .append(td(cache.size))
+            .append(td(item.type))
+            .append(td(item.name))
+            .append(td(item.size))
 
           tbody.append(tr)
         })
+      }
+
+      $.get('../caches', function(data, status) {
+        if (status !== 'success') return failed()
+        if (!data?.backend?.queues) return failed()
+        if (!data?.backend?.containers) return failed()
+
+        var backendList = sortSize(
+          addType(data.backend.queues, 'Queue').concat(
+            addType(data.backend.containers, 'Container')
+          ))
+        append('#backend-table-body', backendList)
       })
     })()
   </script>

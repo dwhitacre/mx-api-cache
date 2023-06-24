@@ -1,8 +1,10 @@
 import { Request, ResponseObject, ResponseToolkit, Server } from '@hapi/hapi'
 import { BlobServiceClient } from '@azure/storage-blob'
-import { Message, getQueueName } from './queue'
+import { Message, QueueMeta, getQueueName } from './queue'
 
 export type Body = Message & { isBodyBlob?: boolean }
+
+export type ContainerMeta = QueueMeta
 
 export default class Blob {
   readonly server: Server
@@ -69,5 +71,19 @@ export default class Blob {
 
     const content = JSON.stringify(body)
     return blockBlobClient.upload(content, content.length)
+  }
+
+  async list(): Promise<Array<ContainerMeta>> {
+    const containers = []
+    for await (const containerItem of this.client.listContainers()) {
+      const containerClient = this.client.getContainerClient(containerItem.name)
+
+      let blobCount = 0
+      for await (const _ of containerClient.listBlobsFlat()) {
+        blobCount++
+      }
+      containers.push({ name: containerItem.name, size: blobCount })
+    }
+    return containers
   }
 }
