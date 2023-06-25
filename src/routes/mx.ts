@@ -48,11 +48,12 @@ export default function register(server: Server): void {
     path: '/mx/maps/download/{id}',
     options: {
       handler: async function (request: Request, h: ResponseToolkit) {
+        const pathname = '/mx/maps/download'
         try {
-          const blob = await request.server.blob().getBlob('/mx/maps/download', request.params.id)
+          const blob = await request.server.blob().getBlob(pathname, request.params.id)
           if (!blob) throw new Error(`blob dne for id ${request.params.id}`)
 
-          return request.server.blob().toResponse(blob, request, h)
+          return request.server.blob().toResponse(pathname, blob, request, h)
         } catch (err) {
           request.logger.debug(err, 'failed to connect to blob, falling back to proxy')
           return h.proxy({

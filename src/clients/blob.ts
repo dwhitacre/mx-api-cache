@@ -40,7 +40,7 @@ export default class Blob {
     return download.readableStreamBody
   }
 
-  async toResponse(stream: NodeJS.ReadableStream, request: Request, h: ResponseToolkit): Promise<ResponseObject> {
+  async toResponse(pathname: string, stream: NodeJS.ReadableStream, request: Request, h: ResponseToolkit): Promise<ResponseObject> {
     const json = (await new Promise((resolve, reject) => {
       let chunks = ''
       stream.on('data', (chunk) => (chunks += chunk))
@@ -55,7 +55,14 @@ export default class Blob {
     })) as Body
     request.logger.debug({ json }, 'parsed json')
 
-    const response = h.response(json.body).code(json.status)
+    let body: string | NodeJS.ReadableStream = json.body
+    if (json.isBodyBlob) {
+      const content = await this.getBlob(pathname, body)
+      if (!content) throw new Error('failed to get body blob')
+      body = content
+    }
+
+    const response = h.response(body).code(json.status)
     Object.entries(json.headers).forEach(([key, value]) => {
       response.header(key, value)
     })
