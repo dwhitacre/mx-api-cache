@@ -81,7 +81,7 @@ export default function register(server: Server): void {
               status: preload.response.statusCode,
               headers: preload.response.headers as Record<string, string>,
             })
-            currentSize++
+            currentSize = (await queueClient.getProperties()).approximateMessagesCount ?? currentSize + 1
           }
 
           return { status: 'ok', msg: 'preloaded rmc' }
