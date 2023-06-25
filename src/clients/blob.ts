@@ -23,11 +23,9 @@ export default class Blob {
 
   async getContainerClient(pathname: string) {
     const containerName = this.getContainerName(pathname)
-    try {
-      await this.client.createContainer(containerName)
-      this.server.logger.warn('blob.getContainerClient: queue does not exist, created..')
-    } catch {}
-    return this.client.getContainerClient(containerName)
+    const containerClient = this.client.getContainerClient(containerName)
+    await containerClient.createIfNotExists()
+    return containerClient
   }
 
   async getBlob(pathname: string, blobname: string) {

@@ -33,11 +33,9 @@ export default class Queue {
 
   async getQueueClient(pathname: string) {
     const queueName = this.getQueueName(pathname)
-    try {
-      await this.client.createQueue(queueName)
-      this.server.logger.warn('queue.getQueueClient: queue does not exist, created..')
-    } catch {}
-    return this.client.getQueueClient(queueName)
+    const queueClient = this.client.getQueueClient(queueName)
+    await queueClient.createIfNotExists()
+    return queueClient
   }
 
   async getMessage(queueClient: QueueClient): Promise<DequeuedMessageItem> {
