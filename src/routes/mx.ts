@@ -53,7 +53,8 @@ export default function register(server: Server): void {
           const blob = await request.server.blob().getBlob(pathname, request.params.id)
           if (!blob) throw new Error(`blob dne for id ${request.params.id}`)
 
-          return request.server.blob().toResponse(pathname, blob, request, h)
+          const response = await request.server.blob().toResponse(pathname, blob, request, h)
+          return response
         } catch (err) {
           request.logger.debug(err, 'failed to connect to blob, falling back to proxy')
           return h.proxy({
