@@ -10,11 +10,13 @@ const azureConnStr =
 let queue: Queue
 let blob: Blob
 const trackId = 501
-const blobContent = {
+const blobContent = (isBodyBlobId?: boolean) => ({
   body: 'bodymap',
   status: 250,
   headers: { Test: 'Header' },
-}
+  isBodyBlobId,
+})
+const bodyBlobContent = 'bodyblobmap'
 const queueContent = (id = trackId) => ({
   body: `{ "results": [{ "TrackID": ${id} }] }`,
   status: 260,
@@ -71,9 +73,17 @@ describe('api', function () {
         const response = await fetch(`${url}${pathname}/${id}`)
         const data = await response.text()
 
-        expect(response.status).toBe(blobContent.status)
+        expect(response.status).toBe(blobContent().status)
         expect(response.headers.get('Test')).toBe('Header')
-        expect(data).toBe(blobContent.body)
+        expect(data).toBe(blobContent().body)
+      }
+      const expectBodyBlob = async (id = trackId) => {
+        const response = await fetch(`${url}${pathname}/${id}`)
+        const data = await response.text()
+
+        expect(response.status).toBe(blobContent(true).status)
+        expect(response.headers.get('Test')).toBe('Header')
+        expect(data).toBe(bodyBlobContent)
       }
 
       it('should download map from api if blob container dne', async function () {
@@ -88,33 +98,55 @@ describe('api', function () {
       })
 
       it('should download map from blob if blob exists', async function () {
-        await blob.createBlob(pathname, trackId.toString(), blobContent)
+        await blob.createBlob(pathname, trackId.toString(), blobContent())
         await expectBlob()
       })
 
       it('should remove the map downloaded from blob', async function () {
-        await blob.createBlob(pathname, trackId.toString(), blobContent)
+        await blob.createBlob(pathname, trackId.toString(), blobContent())
         await fetch(`${url}${pathname}/${trackId}`)
         await expectAPI()
       })
 
+      it('should download map from api if blob dne if isbodyblobid', async function () {
+        await blob.getContainerClient(pathname)
+        await blob.createBlob(pathname, trackId.toString(), blobContent(true))
+        await expectAPI()
+      })
+
+      it('should download map from separate blob if isbodyblobid', async function () {
+        const bc = blobContent(true)
+        await blob.createBlob(pathname, trackId.toString(), bc)
+        await blob.createBlob(pathname, bc.body, bodyBlobContent)
+        await expectBodyBlob()
+      })
+
+      it('should remove the map downloaded from blob if isbodyblobid', async function () {
+        const bc = blobContent(true)
+        await blob.createBlob(pathname, trackId.toString(), bc)
+        await blob.createBlob(pathname, bc.body, bodyBlobContent)
+        await fetch(`${url}${pathname}/${trackId}`)
+        await blob.createBlob(pathname, trackId.toString(), bc)
+        await expectAPI()
+      })
+
       it('should download many maps from blob', async function () {
-        await blob.createBlob(pathname, '240', blobContent)
-        await blob.createBlob(pathname, '241', blobContent)
+        await blob.createBlob(pathname, '240', blobContent())
+        await blob.createBlob(pathname, '241', blobContent())
         await expectBlob(240)
         await expectBlob(241)
-        await blob.createBlob(pathname, '242', blobContent)
+        await blob.createBlob(pathname, '242', blobContent())
         await expectBlob(242)
-        await blob.createBlob(pathname, '243', blobContent)
-        await blob.createBlob(pathname, '244', blobContent)
-        await blob.createBlob(pathname, '245', blobContent)
-        await blob.createBlob(pathname, '246', blobContent)
+        await blob.createBlob(pathname, '243', blobContent())
+        await blob.createBlob(pathname, '244', blobContent())
+        await blob.createBlob(pathname, '245', blobContent())
+        await blob.createBlob(pathname, '246', blobContent())
         await expectBlob(243)
         await expectBlob(244)
         await expectBlob(245)
         await expectBlob(246)
         await expectAPI(247)
-        await blob.createBlob(pathname, '247', blobContent)
+        await blob.createBlob(pathname, '247', blobContent())
         await expectBlob(247)
       })
     })
@@ -230,9 +262,9 @@ describe('api', function () {
     })
 
     it('should return all the containers and their sizes', async function () {
-      await blob.createBlob('/mx/maps/download', '601', blobContent)
-      await blob.createBlob('/mx/maps/download', '602', blobContent)
-      await blob.createBlob('/mx/maps/download', '603', blobContent)
+      await blob.createBlob('/mx/maps/download', '601', blobContent())
+      await blob.createBlob('/mx/maps/download', '602', blobContent())
+      await blob.createBlob('/mx/maps/download', '603', blobContent())
 
       const response = await fetch(`${url}/caches`)
       const data = await response.json()

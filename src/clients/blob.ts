@@ -2,7 +2,7 @@ import { Request, ResponseObject, ResponseToolkit, Server } from '@hapi/hapi'
 import { BlobServiceClient } from '@azure/storage-blob'
 import { Message, QueueMeta, getQueueName } from './queue'
 
-export type Body = Message & { isBodyBlob?: boolean }
+export type Body = Message & { isBodyBlobId?: boolean }
 
 export type ContainerMeta = QueueMeta
 
@@ -56,7 +56,7 @@ export default class Blob {
     request.logger.debug({ json }, 'parsed json')
 
     let body: string | NodeJS.ReadableStream = json.body
-    if (json.isBodyBlob) {
+    if (json.isBodyBlobId) {
       const content = await this.getBlob(pathname, body)
       if (!content) throw new Error('failed to get body blob')
       body = content
@@ -70,11 +70,11 @@ export default class Blob {
     return response
   }
 
-  async createBlob(pathname: string, blobname: string, body: Body) {
+  async createBlob(pathname: string, blobname: string, body: Body | string) {
     const containerClient = await this.getContainerClient(pathname)
     const blockBlobClient = containerClient.getBlockBlobClient(blobname)
 
-    const content = JSON.stringify(body)
+    const content = typeof body == 'string' ? body : JSON.stringify(body)
     return blockBlobClient.upload(content, content.length)
   }
 
