@@ -277,6 +277,7 @@ describe('api', function () {
     describe('/caches/rmc', function () {
       const pathname = '/caches/rmc'
       const searchUrl = `/mx/${process.env.CACHE_RMC_SEARCHURL}`
+      const downloadUrl = `/mx/${process.env.CACHE_RMC_DOWNLOADURL}`
       const size = parseInt(process.env.CACHE_RMC_SIZE ?? '5')
 
       it('should preload maps to mapsearch', async function () {
@@ -296,6 +297,25 @@ describe('api', function () {
         data = await response.json()
         expect(data.backend.queues).toHaveLength(1)
         expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: size - 1 }))
+      })
+
+      it('should preload maps to map downlaod', async function () {
+        await fetch(`${url}${pathname}`)
+
+        let response = await fetch(`${url}/caches`)
+        let data = await response.json()
+        expect(data.backend.containers).toHaveLength(1)
+        expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 2 }))
+
+        response = await fetch(`${url}${downloadUrl}/500`)
+        data = await response.text()
+        expect(response.status).toBe(200)
+        expect(data).toBe('map')
+
+        response = await fetch(`${url}/caches`)
+        data = await response.json()
+        expect(data.backend.containers).toHaveLength(1)
+        expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 0 }))
       })
     })
   })

@@ -1,6 +1,7 @@
 import { Request, ResponseObject, ResponseToolkit, Server } from '@hapi/hapi'
 import { BlobServiceClient } from '@azure/storage-blob'
 import { Message, QueueMeta, getQueueName } from './queue'
+import { IncomingMessage } from 'http'
 
 export type Body = Message & { isBodyBlobId?: boolean }
 
@@ -70,9 +71,13 @@ export default class Blob {
     return response
   }
 
-  async createBlob(pathname: string, blobname: string, body: Body | string) {
+  async createBlob(pathname: string, blobname: string, body: Body | IncomingMessage | string) {
     const containerClient = await this.getContainerClient(pathname)
     const blockBlobClient = containerClient.getBlockBlobClient(blobname)
+
+    if (body instanceof IncomingMessage) {
+      return blockBlobClient.uploadStream(body)
+    }
 
     const content = typeof body == 'string' ? body : JSON.stringify(body)
     return blockBlobClient.upload(content, content.length)

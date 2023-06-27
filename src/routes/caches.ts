@@ -58,8 +58,9 @@ export default function register(server: Server): void {
     options: {
       handler: async function (request: Request) {
         try {
-          const { size, searchUrl } = server.cacheConfig().rmc
+          const { size, searchUrl, downloadUrl } = server.cacheConfig().rmc
           const queuePathname = `mx/${searchUrl}`
+          const blobPathname = `mx/${downloadUrl}`
 
           const queueClient = await server.queue().getQueueClient(queuePathname)
           const properties = await queueClient.getProperties()
@@ -70,10 +71,10 @@ export default function register(server: Server): void {
             if (!preload) throw new Error('failed to preload')
             if (preload.response.statusCode != 200) throw new Error('failed to get successful api call in preload')
 
-            const track = preload.search.results[0]
+            const track = preload.search.results?.[0]
             if (!track) throw new Error('failed to find track in preload')
 
-            const trackId = track.TrackID
+            const trackId = track.TrackID?.toString()
             if (!trackId) throw new Error('failed to find track id in track in preload')
 
             await server.queue().createMessage(queuePathname, {
@@ -81,6 +82,20 @@ export default function register(server: Server): void {
               status: preload.response.statusCode,
               headers: preload.response.headers as Record<string, string>,
             })
+
+            const preloadDownload = await request.server.mx().mapDownload(downloadUrl, trackId)
+            if (!preloadDownload) throw new Error('failed to download map in preload')
+            if (preloadDownload.response.statusCode != 200) throw new Error('failed to get successful download api call in preload')
+
+            const mapBlobId = `${trackId}_map`
+            await server.blob().createBlob(blobPathname, trackId, {
+              body: mapBlobId,
+              status: preloadDownload.response.statusCode,
+              headers: preloadDownload.response.headers as Record<string, string>,
+              isBodyBlobId: true,
+            })
+            await server.blob().createBlob(blobPathname, mapBlobId, preloadDownload.response)
+
             currentSize = (await queueClient.getProperties()).approximateMessagesCount ?? currentSize + 1
           }
 

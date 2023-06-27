@@ -4,9 +4,9 @@ import pack from '../../package.json'
 
 export interface Search {
   [_: string]: unknown
-  results: Array<{
+  results?: Array<{
     [_: string]: unknown
-    TrackID: string
+    TrackID?: number
   }>
 }
 
@@ -43,6 +43,17 @@ export default class Mx {
       const search: Search = await Wreck.read(response, { json: true })
 
       return { response, search }
+    } catch (err) {
+      this.server.logger.error(err, 'failed to preload map')
+      return false
+    }
+  }
+
+  async mapDownload(downloadUrl: string, trackId: string) {
+    try {
+      const response = await this.call('get', `${downloadUrl}/${trackId}`, {})
+      if (!response) throw new Error('failed to map download')
+      return { response }
     } catch (err) {
       this.server.logger.error(err, 'failed to preload map')
       return false
