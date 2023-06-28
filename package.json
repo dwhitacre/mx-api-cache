@@ -54,7 +54,7 @@
     "build:docker": "docker-compose build mx-api-cache",
     "dev": "concurrently -k -p \"[{name}]\" -n \"Build,API,Azurite,Mx-Sim\" -c \"cyan.bold,green.bold,red.bold,blue.bold\" \"yarn build:watch\" \"yarn start:watch\" \"yarn start:azurite\" \"yarn start:mx-sim\"",
     "start": "node dist/mx-api-cache.js",
-    "start:watch": "nodemon -i test dist/mx-api-cache.js",
+    "start:watch": "nodemon -i test dist/mx-api-cache.js -w .env -w dist/mx-api-cache.js",
     "start:ngrok": "ts-node .bin/ngrok.ts",
     "start:docker": "docker-compose up --build -- mx-api-cache",
     "start:azurite": "docker-compose up -- azurite",
