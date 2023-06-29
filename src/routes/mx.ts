@@ -1,8 +1,4 @@
 import { Request, ResponseToolkit, Server } from '@hapi/hapi'
-import pack from '../../package.json'
-import { ProxyTarget } from '@hapi/h2o2'
-import { Boom } from '@hapi/boom'
-import { IncomingMessage } from 'http'
 
 export default function register(server: Server): void {
   server.route({
@@ -20,21 +16,8 @@ export default function register(server: Server): void {
           const response = await request.server.queue().toResponse(message, request, h)
           return response
         } catch (err) {
-          request.logger.debug(err, 'failed to connect to queue, falling back to proxy')
-          return h.proxy({
-            mapUri: async function (request: Request) {
-              const target: ProxyTarget = {
-                uri: `${server.mx().baseUrl}/${request.params.param}${request.url.search}`,
-                headers: {
-                  'User-Agent': request.headers['user-agent'] ?? `${pack.name}:${pack.version}`,
-                },
-              }
-              return target
-            },
-            onResponse: async function (_: Boom | null, response: IncomingMessage) {
-              return response
-            },
-          })
+          request.logger.debug(err, 'failed to connect to queue, falling back to redirect')
+          return h.redirect(`${server.mx().baseUrl}/${request.params.param}${request.url.search}`)
         }
       },
       description: 'Proxy to the mx api.',
@@ -56,21 +39,8 @@ export default function register(server: Server): void {
           const response = await request.server.blob().toResponse(pathname, blob, request, h)
           return response
         } catch (err) {
-          request.logger.debug(err, 'failed to connect to blob, falling back to proxy')
-          return h.proxy({
-            mapUri: async function (request: Request) {
-              const target: ProxyTarget = {
-                uri: `${server.mx().baseUrl}/maps/download/${request.params.id}`,
-                headers: {
-                  'User-Agent': request.headers['user-agent'] ?? `${pack.name}:${pack.version}`,
-                },
-              }
-              return target
-            },
-            onResponse: async function (_: Boom | null, response: IncomingMessage) {
-              return response
-            },
-          })
+          request.logger.debug(err, 'failed to connect to blob, falling back to redirect')
+          return h.redirect(`${server.mx().baseUrl}/maps/download/${request.params.id}`)
         }
       },
       description: 'Proxy map downloads to the mx api.',
