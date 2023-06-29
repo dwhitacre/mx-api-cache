@@ -1417,16 +1417,6 @@
   resolved "https://registry.yarnpkg.com/@hapi/formula/-/formula-2.0.0.tgz#edade0619ed58c8e4f164f233cda70211e787128"
   integrity sha512-V87P8fv7PI0LH7LiVi8Lkf3x+KCO7pQozXRssAHNXXL9L1K+uyu4XypLXwxqVDKgyQai6qj3/KteNlrqDx4W5A==
 
-"@hapi/h2o2@^10.0.2":
-  version "10.0.2"
-  resolved "https://registry.yarnpkg.com/@hapi/h2o2/-/h2o2-10.0.2.tgz#be3ab3ba0c10d3703f80eb24c48941d9c8144241"
-  integrity sha512-CZtYJJKGpVpTC1rHroj8Uhq38AjAKG3JsVDekhJXWj7LCmLhilu8cYceRuK0aGMeR85WALRsQo/HvtT0FINJpQ==
-  dependencies:
-    "@hapi/boom" "^10.0.1"
-    "@hapi/hoek" "^11.0.2"
-    "@hapi/validate" "^2.0.1"
-    "@hapi/wreck" "^18.0.1"
-
 "@hapi/hapi@^21.3.2":
   version "21.3.2"
   resolved "https://registry.yarnpkg.com/@hapi/hapi/-/hapi-21.3.2.tgz#f9f94c1c28ccad1444c838d04070fa1cd0409b33"
