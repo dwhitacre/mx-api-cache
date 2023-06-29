@@ -299,7 +299,7 @@ describe('api', function () {
         expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: size - 1 }))
       })
 
-      it('should preload maps to map downlaod', async function () {
+      it('should preload maps to map download', async function () {
         await fetch(`${url}${pathname}`)
 
         let response = await fetch(`${url}/caches`)
