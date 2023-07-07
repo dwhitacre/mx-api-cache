@@ -36,9 +36,9 @@ export default class Mx {
     }
   }
 
-  async mapSearch(searchUrl: string) {
+  async mapSearch(searchUrl: string, options = {}) {
     try {
-      const response = await this.call('get', searchUrl, {})
+      const response = await this.call('get', searchUrl, options)
       if (!response) throw new Error('failed to map search')
       const search: Search = await Wreck.read(response, { json: true })
 
@@ -49,9 +49,9 @@ export default class Mx {
     }
   }
 
-  async mapDownload(downloadUrl: string, trackId: string) {
+  async mapDownload(downloadUrl: string, trackId: string, options = {}) {
     try {
-      const response = await this.call('get', `${downloadUrl}/${trackId}`, {})
+      const response = await this.call('get', `${downloadUrl}/${trackId}`, options)
       if (!response) throw new Error('failed to map download')
       return { response }
     } catch (err) {
