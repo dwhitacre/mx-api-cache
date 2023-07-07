@@ -20,11 +20,15 @@ export default class Queue {
   readonly server: Server
   readonly connStr: string
   readonly client: QueueServiceClient
+  readonly messageTimeToLive: number
 
-  constructor(server: Server, { connStr }: { connStr: string }) {
+  private readonly days7 = 7 * 24 * 60 * 60
+
+  constructor(server: Server, { connStr, messageTimeToLive }: { connStr: string; messageTimeToLive?: number }) {
     this.server = server
     this.connStr = connStr
     this.client = QueueServiceClient.fromConnectionString(this.connStr)
+    this.messageTimeToLive = messageTimeToLive ?? this.days7
   }
 
   getQueueName(pathname: string) {
@@ -63,7 +67,7 @@ export default class Queue {
   async createMessage(pathname: string, message: Message) {
     const queueClient = await this.getQueueClient(pathname)
     const content = JSON.stringify(message)
-    return queueClient.sendMessage(content)
+    return queueClient.sendMessage(content, { messageTimeToLive: this.messageTimeToLive })
   }
 
   async list(): Promise<Array<QueueMeta>> {
