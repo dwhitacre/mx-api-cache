@@ -327,10 +327,13 @@ describe('api', function () {
         expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 0 }))
       })
 
-      it.skip('should not preload maps to map search if mx map download fails', async function () {
-        // todo setup failure response of map download
+      it('should not preload maps to map search if mx map download fails', async function () {
+        await fetch(`${url}${pathname}?download=fail/500`)
 
-        await fetch(`${url}${pathname}`)
+        const response = await fetch(`${url}/caches`)
+        const data = await response.json()
+        expect(data.backend.queues).toHaveLength(1)
+        expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 0 }))
       })
     })
   })

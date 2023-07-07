@@ -80,12 +80,6 @@ export default function register(server: Server): void {
             const trackId = track.TrackID?.toString()
             if (!trackId) throw new Error('failed to find track id in track in preload')
 
-            await server.queue().createMessage(queuePathname, {
-              body: JSON.stringify(preload.search),
-              status: preload.response.statusCode,
-              headers: preload.response.headers as Record<string, string>,
-            })
-
             const preloadDownload = await request.server.mx().mapDownload(downloadUrl, trackId, downloadOptions)
             if (!preloadDownload) throw new Error('failed to download map in preload')
             if (preloadDownload.response.statusCode != 200) throw new Error('failed to get successful download api call in preload')
@@ -98,6 +92,12 @@ export default function register(server: Server): void {
               isBodyBlobId: true,
             })
             await server.blob().createBlob(blobPathname, mapBlobId, preloadDownload.response)
+
+            await server.queue().createMessage(queuePathname, {
+              body: JSON.stringify(preload.search),
+              status: preload.response.statusCode,
+              headers: preload.response.headers as Record<string, string>,
+            })
 
             currentSize = (await queueClient.getProperties()).approximateMessagesCount ?? currentSize + 1
           }
