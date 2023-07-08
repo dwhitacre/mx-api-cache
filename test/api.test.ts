@@ -341,6 +341,11 @@ describe('api', function () {
         const response = await fetch(`${url}${pathname}`)
         expect(response.status).toBe(401)
       })
+
+      it('should reject preload if bad apikey is specified', async function () {
+        const response = await fetch(`${url}${pathname}`, { headers: { 'x-apikey': 'bad-apikey' } })
+        expect(response.status).toBe(401)
+      })
     })
   })
 })
