@@ -93,6 +93,7 @@ async function start(): Promise<void> {
           request: {
             method: 'GET',
             url: '/caches/rmc',
+            headers: { 'x-apikey': process.env.APIKEY },
           },
           onComplete: (response: Response) => {
             server.logger.debug({ response }, 'caches/rmc ran')

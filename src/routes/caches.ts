@@ -1,5 +1,5 @@
 import { Request, Server } from '@hapi/hapi'
-import { badGateway, badImplementation } from '@hapi/boom'
+import { badGateway, badImplementation, unauthorized } from '@hapi/boom'
 import { QueueMeta } from '../clients/queue'
 import { ContainerMeta } from '../clients/blob'
 
@@ -57,6 +57,8 @@ export default function register(server: Server): void {
     path: '/caches/rmc',
     options: {
       handler: async function (request: Request) {
+        if (request.headers['x-apikey'] !== process.env.APIKEY) return unauthorized('invalid apikey')
+
         try {
           const { size, searchUrl, downloadUrl } = server.cacheConfig().rmc
           const queuePathname = `mx/${searchUrl}`
