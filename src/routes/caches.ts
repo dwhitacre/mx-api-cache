@@ -15,7 +15,9 @@ export interface Caches {
 
 export interface RMCConfig {
   size: number
+  messageTtl: number
   schedule: string
+  pruneSchedule: string
   searchUrl: string
   downloadUrl: string
 }
@@ -60,7 +62,7 @@ export default function register(server: Server): void {
         if (request.headers['x-apikey'] !== process.env.APIKEY) return unauthorized('invalid apikey')
 
         try {
-          const { size, searchUrl, downloadUrl } = server.cacheConfig().rmc
+          const { size, messageTtl, searchUrl, downloadUrl } = server.cacheConfig().rmc
           const queuePathname = `mx/${searchUrl}`
           const blobPathname = `mx/${downloadUrl}`
 
@@ -95,11 +97,15 @@ export default function register(server: Server): void {
             })
             await server.blob().createBlob(blobPathname, mapBlobId, preloadDownload.response)
 
-            await server.queue().createMessage(queuePathname, {
-              body: JSON.stringify(preload.search),
-              status: preload.response.statusCode,
-              headers: preload.response.headers as Record<string, string>,
-            })
+            await server.queue().createMessage(
+              queuePathname,
+              {
+                body: JSON.stringify(preload.search),
+                status: preload.response.statusCode,
+                headers: preload.response.headers as Record<string, string>,
+              },
+              messageTtl,
+            )
 
             currentSize = (await queueClient.getProperties()).approximateMessagesCount ?? currentSize + 1
           }
@@ -112,6 +118,34 @@ export default function register(server: Server): void {
       },
       description: 'Preload the mx cache',
       notes: 'GET preload the mx cache',
+      tags: ['api', 'caches'],
+    },
+  })
+
+  server.route({
+    method: 'DELETE',
+    path: '/caches/rmc',
+    options: {
+      handler: async function (request: Request) {
+        if (request.headers['x-apikey'] !== process.env.APIKEY) return unauthorized('invalid apikey')
+
+        try {
+          const { messageTtl, downloadUrl } = server.cacheConfig().rmc
+          const blobPathname = `mx/${downloadUrl}`
+
+          const currentDate = request.query.date?.length ? request.query.date : Date.now()
+          const createdBefore = new Date(currentDate - 2 * 1000 * messageTtl)
+
+          await server.blob().purge(blobPathname, createdBefore)
+
+          return { status: 'ok', msg: 'pruned rmc' }
+        } catch (err) {
+          request.logger.error(err, 'failed to prune rmc')
+          return badImplementation('failed to prune rmc')
+        }
+      },
+      description: 'Prune the mx cache',
+      notes: 'DELETE prune the mx cache',
       tags: ['api', 'caches'],
     },
   })

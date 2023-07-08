@@ -20,6 +20,7 @@ export default class Queue {
   readonly server: Server
   readonly connStr: string
   readonly client: QueueServiceClient
+  readonly messageTimeToLive = 7 * 24 * 60 * 60 // 7 days
 
   constructor(server: Server, { connStr }: { connStr: string }) {
     this.server = server
@@ -60,10 +61,10 @@ export default class Queue {
     return response
   }
 
-  async createMessage(pathname: string, message: Message) {
+  async createMessage(pathname: string, message: Message, messageTimeToLive: number = this.messageTimeToLive) {
     const queueClient = await this.getQueueClient(pathname)
     const content = JSON.stringify(message)
-    return queueClient.sendMessage(content)
+    return queueClient.sendMessage(content, { messageTimeToLive })
   }
 
   async list(): Promise<Array<QueueMeta>> {
