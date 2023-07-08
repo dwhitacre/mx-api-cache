@@ -133,9 +133,8 @@ export default function register(server: Server): void {
           const { messageTtl, downloadUrl } = server.cacheConfig().rmc
           const blobPathname = `mx/${downloadUrl}`
 
-          const createdBefore = request.query.createdBefore?.length
-            ? new Date(Date.parse(request.query.createdBefore))
-            : new Date(Date.now() - 2 * 1000 * messageTtl)
+          const currentDate = request.query.date?.length ? request.query.date : Date.now()
+          const createdBefore = new Date(currentDate - 2 * 1000 * messageTtl)
 
           await server.blob().purge(blobPathname, createdBefore)
 

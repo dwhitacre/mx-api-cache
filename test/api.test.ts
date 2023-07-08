@@ -352,10 +352,38 @@ describe('api', function () {
 
       describe('delete', function () {
         const options = { method: 'DELETE', headers: { 'x-apikey': process.env.APIKEY ?? 'dev-apikey' } }
+        const blobPathname = '/mx/maps/download'
+        const messageTimeToLive = parseInt(process.env.CACHE_RMC_MESSAGETTL ?? '604800')
 
-        it.todo('should prune preloaded maps that are older than double rmc message time to live')
-        it.todo('should not prune preloaded maps younger than message time to live')
-        it.todo('should not prune preloaded maps younger than double message time to live')
+        it('should not prune preloaded maps within message time to live', async function () {
+          await blob.createBlob(blobPathname, trackId.toString(), blobContent())
+          await fetch(`${url}${pathname}`, options)
+
+          const response = await fetch(`${url}/caches`)
+          const data = await response.json()
+          expect(data.backend.containers).toHaveLength(1)
+          expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 1 }))
+        })
+
+        it('should not prune preloaded maps within double message time to live', async function () {
+          await blob.createBlob(blobPathname, trackId.toString(), blobContent())
+          await fetch(`${url}${pathname}?date=${Date.now() + 1000 * messageTimeToLive + 1000}`, options)
+
+          const response = await fetch(`${url}/caches`)
+          const data = await response.json()
+          expect(data.backend.containers).toHaveLength(1)
+          expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 1 }))
+        })
+
+        it('should prune preloaded maps that are older than double message time to live', async function () {
+          await blob.createBlob(blobPathname, trackId.toString(), blobContent())
+          await fetch(`${url}${pathname}?date=${Date.now() + 2 * 1000 * messageTimeToLive + 1000}`, options)
+
+          const response = await fetch(`${url}/caches`)
+          const data = await response.json()
+          expect(data.backend.containers).toHaveLength(1)
+          expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 0 }))
+        })
 
         it('should reject prune if no apikey is specified', async function () {
           const response = await fetch(`${url}${pathname}`, { method: 'DELETE' })
