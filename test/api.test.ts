@@ -279,9 +279,10 @@ describe('api', function () {
       const searchUrl = `/mx/${process.env.CACHE_RMC_SEARCHURL}`
       const downloadUrl = `/mx/${process.env.CACHE_RMC_DOWNLOADURL}`
       const size = parseInt(process.env.CACHE_RMC_SIZE ?? '5')
+      const options = { headers: { 'x-apikey': process.env.APIKEY ?? 'dev-apikey' } }
 
       it('should preload maps to mapsearch', async function () {
-        await fetch(`${url}${pathname}`)
+        await fetch(`${url}${pathname}`, options)
 
         let response = await fetch(`${url}/caches`)
         let data = await response.json()
@@ -300,7 +301,7 @@ describe('api', function () {
       })
 
       it('should preload maps to map download', async function () {
-        await fetch(`${url}${pathname}`)
+        await fetch(`${url}${pathname}`, options)
 
         let response = await fetch(`${url}/caches`)
         let data = await response.json()
@@ -319,7 +320,7 @@ describe('api', function () {
       })
 
       it('should not preload maps to map search if mx map search fails', async function () {
-        await fetch(`${url}${pathname}?search=fail/500`)
+        await fetch(`${url}${pathname}?search=fail/500`, options)
 
         const response = await fetch(`${url}/caches`)
         const data = await response.json()
@@ -328,12 +329,17 @@ describe('api', function () {
       })
 
       it('should not preload maps to map search if mx map download fails', async function () {
-        await fetch(`${url}${pathname}?download=fail/500`)
+        await fetch(`${url}${pathname}?download=fail/500`, options)
 
         const response = await fetch(`${url}/caches`)
         const data = await response.json()
         expect(data.backend.queues).toHaveLength(1)
         expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 0 }))
+      })
+
+      it('should reject preload if no apikey is specified', async function () {
+        const response = await fetch(`${url}${pathname}`)
+        expect(response.status).toBe(401)
       })
     })
   })
