@@ -96,4 +96,14 @@ export default class Blob {
     }
     return containers
   }
+
+  async purge(pathname: string, createdBefore: Date): Promise<void> {
+    const containerClient = await this.getContainerClient(pathname)
+    for await (const blob of containerClient.listBlobsFlat()) {
+      if (blob.properties.createdOn && blob.properties.createdOn < createdBefore) {
+        const blobClient = containerClient.getBlobClient(blob.name)
+        await blobClient.deleteIfExists()
+      }
+    }
+  }
 }

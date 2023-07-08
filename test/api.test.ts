@@ -279,72 +279,93 @@ describe('api', function () {
       const searchUrl = `/mx/${process.env.CACHE_RMC_SEARCHURL}`
       const downloadUrl = `/mx/${process.env.CACHE_RMC_DOWNLOADURL}`
       const size = parseInt(process.env.CACHE_RMC_SIZE ?? '5')
-      const options = { headers: { 'x-apikey': process.env.APIKEY ?? 'dev-apikey' } }
 
-      it('should preload maps to mapsearch', async function () {
-        await fetch(`${url}${pathname}`, options)
+      describe('get', function () {
+        const options = { headers: { 'x-apikey': process.env.APIKEY ?? 'dev-apikey' } }
 
-        let response = await fetch(`${url}/caches`)
-        let data = await response.json()
-        expect(data.backend.queues).toHaveLength(1)
-        expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size }))
+        it('should preload maps to mapsearch', async function () {
+          await fetch(`${url}${pathname}`, options)
 
-        response = await fetch(`${url}${searchUrl}`)
-        data = await response.json()
-        expect(response.status).toBe(200)
-        expect(data.results).toContainEqual(expect.objectContaining({ TrackID: 500 }))
+          let response = await fetch(`${url}/caches`)
+          let data = await response.json()
+          expect(data.backend.queues).toHaveLength(1)
+          expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size }))
 
-        response = await fetch(`${url}/caches`)
-        data = await response.json()
-        expect(data.backend.queues).toHaveLength(1)
-        expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: size - 1 }))
+          response = await fetch(`${url}${searchUrl}`)
+          data = await response.json()
+          expect(response.status).toBe(200)
+          expect(data.results).toContainEqual(expect.objectContaining({ TrackID: 500 }))
+
+          response = await fetch(`${url}/caches`)
+          data = await response.json()
+          expect(data.backend.queues).toHaveLength(1)
+          expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: size - 1 }))
+        })
+
+        it('should preload maps to map download', async function () {
+          await fetch(`${url}${pathname}`, options)
+
+          let response = await fetch(`${url}/caches`)
+          let data = await response.json()
+          expect(data.backend.containers).toHaveLength(1)
+          expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 2 }))
+
+          response = await fetch(`${url}${downloadUrl}/500`)
+          data = await response.text()
+          expect(response.status).toBe(200)
+          expect(data).toBe('map')
+
+          response = await fetch(`${url}/caches`)
+          data = await response.json()
+          expect(data.backend.containers).toHaveLength(1)
+          expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 0 }))
+        })
+
+        it('should not preload maps to map search if mx map search fails', async function () {
+          await fetch(`${url}${pathname}?search=fail/500`, options)
+
+          const response = await fetch(`${url}/caches`)
+          const data = await response.json()
+          expect(data.backend.queues).toHaveLength(1)
+          expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 0 }))
+        })
+
+        it('should not preload maps to map search if mx map download fails', async function () {
+          await fetch(`${url}${pathname}?download=fail/500`, options)
+
+          const response = await fetch(`${url}/caches`)
+          const data = await response.json()
+          expect(data.backend.queues).toHaveLength(1)
+          expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 0 }))
+        })
+
+        it('should reject preload if no apikey is specified', async function () {
+          const response = await fetch(`${url}${pathname}`)
+          expect(response.status).toBe(401)
+        })
+
+        it('should reject preload if bad apikey is specified', async function () {
+          const response = await fetch(`${url}${pathname}`, { headers: { 'x-apikey': 'bad-apikey' } })
+          expect(response.status).toBe(401)
+        })
       })
 
-      it('should preload maps to map download', async function () {
-        await fetch(`${url}${pathname}`, options)
+      describe('delete', function () {
+        const options = { method: 'DELETE', headers: { 'x-apikey': process.env.APIKEY ?? 'dev-apikey' } }
 
-        let response = await fetch(`${url}/caches`)
-        let data = await response.json()
-        expect(data.backend.containers).toHaveLength(1)
-        expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 2 }))
+        it.todo('should prune preloaded maps that are older than double rmc message time to live')
+        it.todo('should not prune preloaded maps younger than message time to live')
+        it.todo('should not prune preloaded maps younger than double message time to live')
 
-        response = await fetch(`${url}${downloadUrl}/500`)
-        data = await response.text()
-        expect(response.status).toBe(200)
-        expect(data).toBe('map')
+        it('should reject prune if no apikey is specified', async function () {
+          const response = await fetch(`${url}${pathname}`, { method: 'DELETE' })
+          expect(response.status).toBe(401)
+        })
 
-        response = await fetch(`${url}/caches`)
-        data = await response.json()
-        expect(data.backend.containers).toHaveLength(1)
-        expect(data.backend.containers).toContainEqual(expect.objectContaining({ name: 'mx-maps-download', size: 0 }))
-      })
-
-      it('should not preload maps to map search if mx map search fails', async function () {
-        await fetch(`${url}${pathname}?search=fail/500`, options)
-
-        const response = await fetch(`${url}/caches`)
-        const data = await response.json()
-        expect(data.backend.queues).toHaveLength(1)
-        expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 0 }))
-      })
-
-      it('should not preload maps to map search if mx map download fails', async function () {
-        await fetch(`${url}${pathname}?download=fail/500`, options)
-
-        const response = await fetch(`${url}/caches`)
-        const data = await response.json()
-        expect(data.backend.queues).toHaveLength(1)
-        expect(data.backend.queues).toContainEqual(expect.objectContaining({ name: 'mx-mapsearch2-search', size: 0 }))
-      })
-
-      it('should reject preload if no apikey is specified', async function () {
-        const response = await fetch(`${url}${pathname}`)
-        expect(response.status).toBe(401)
-      })
-
-      it('should reject preload if bad apikey is specified', async function () {
-        const response = await fetch(`${url}${pathname}`, { headers: { 'x-apikey': 'bad-apikey' } })
-        expect(response.status).toBe(401)
+        it('should reject prune if bad apikey is specified', async function () {
+          const response = await fetch(`${url}${pathname}`, { method: 'DELETE', headers: { 'x-apikey': 'bad-apikey' } })
+          expect(response.status).toBe(401)
+        })
       })
     })
   })
